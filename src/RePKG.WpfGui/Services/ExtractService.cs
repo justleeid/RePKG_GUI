@@ -156,11 +156,13 @@ public class ExtractService : IExtractService
         var outputDirectory = CalculateOutputDirectory(item, options);
         Directory.CreateDirectory(outputDirectory);
 
-        // 读取 PKG
+        // 读取 PKG（必须设置 ReadEntryBytes = true 以获取条目数据）
         Package package;
-        using (var reader = new BinaryReader(File.OpenRead(pkgPath), Encoding.UTF8))
+        using (var stream = File.OpenRead(pkgPath))
+        using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
         {
-            package = new PackageReader().ReadFrom(reader);
+            var pkgReader = new PackageReader { ReadEntryBytes = true };
+            package = pkgReader.ReadFrom(reader);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -258,9 +260,10 @@ public class ExtractService : IExtractService
             var result = TexConverter.ConvertToImage(tex);
             File.WriteAllBytes(outputPath, result.Bytes);
         }
-        catch
+        catch (Exception ex)
         {
-            // TEX 转换失败不影响主流程
+            // TEX 转换失败不影响主流程，但记录日志
+            System.Diagnostics.Debug.WriteLine($"TEX 转换失败: {originalPath}, 错误: {ex.Message}");
         }
     }
 

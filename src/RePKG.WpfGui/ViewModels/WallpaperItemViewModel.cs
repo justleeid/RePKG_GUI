@@ -81,6 +81,11 @@ public partial class WallpaperItemViewModel : ObservableObject
     public byte[]? PreviewBytes => _model.PreviewBytes;
 
     /// <summary>
+    /// 底层数据模型引用（供解包等操作使用）
+    /// </summary>
+    public WallpaperItem Model => _model;
+
+    /// <summary>
     /// 标签显示文本
     /// </summary>
     public string TagsDisplay => string.Join(", ", Tags);

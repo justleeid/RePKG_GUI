@@ -40,6 +40,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IExtractService _extractService;
     private readonly MetadataPanelViewModel _metadataPanelViewModel;
     private CancellationTokenSource? _scanCts;
+    private List<WallpaperItemViewModel> _allItems = []; // 未过滤的完整列表
 
     public MainViewModel(
         IPkgMetadataService metadataService,
@@ -188,6 +189,7 @@ public partial class MainViewModel : ObservableObject
         IsScanning = true;
         CurrentScanPath = directoryPath;
         WallpaperItems.Clear();
+        _allItems.Clear();
         TotalCount = 0;
         ScannedCount = 0;
         StatusText = "正在扫描...";
@@ -208,6 +210,11 @@ public partial class MainViewModel : ObservableObject
                 if (item != null)
                 {
                     var viewModel = new WallpaperItemViewModel(item);
+                    viewModel.PropertyChanged += (_, e) =>
+                    {
+                        if (e.PropertyName == nameof(WallpaperItemViewModel.IsSelected))
+                            UpdateSelectedCount();
+                    };
 
                     // 异步加载缩略图
                     if (item.PreviewBytes != null)
@@ -215,6 +222,7 @@ public partial class MainViewModel : ObservableObject
                         _ = LoadThumbnailAsync(viewModel, item.PreviewBytes, ct);
                     }
 
+                    _allItems.Add(viewModel);
                     WallpaperItems.Add(viewModel);
                 }
 
@@ -237,6 +245,22 @@ public partial class MainViewModel : ObservableObject
             IsScanning = false;
         }
     }
+
+    /// <summary>
+    /// 聚焦搜索框
+    /// </summary>
+    [RelayCommand]
+    private void FocusSearch()
+    {
+        // 搜索框通过 ClearSearchText 间接聚焦
+        // 实际的焦点设置在 MainWindow code-behind 中处理
+        SearchBoxFocusRequested?.Invoke();
+    }
+
+    /// <summary>
+    /// 搜索框聚焦请求事件（由 View 订阅）
+    /// </summary>
+    public event Action? SearchBoxFocusRequested;
 
     /// <summary>
     /// 取消扫描
@@ -348,20 +372,16 @@ public partial class MainViewModel : ObservableObject
                 progressViewModel.UpdateElapsed(TimeSpan.FromSeconds(0)); // TODO: 计算实际耗时
             });
 
-            // 执行解包
-            var extractItems = selectedItems.Select(vm => new WallpaperItem
-            {
-                Title = vm.Title,
-                Author = vm.Author,
-                Type = vm.Type,
-                PkgPath = vm.PkgPath,
-                FileSize = vm.FileSize,
-                WorkshopId = vm.WorkshopId,
-                Tags = vm.Tags,
-                PreviewBytes = vm.PreviewBytes
-            });
+            // 执行解包（直接使用 ViewModel 中的底层 Model 引用）
+            var extractItems = selectedItems.Select(vm => vm.Model);
 
             var result = await _extractService.ExtractAsync(extractItems, options, progress);
+
+            // 更新已解包状态
+            foreach (var vm in selectedItems)
+            {
+                vm.Model.IsExtracted = true;
+            }
 
             // 更新进度对话框
             progressViewModel.MarkCompleted(result.SuccessCount, result.FailedCount, result.Elapsed);
@@ -427,7 +447,23 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     private void ApplySearchFilter()
     {
-        // TODO: 实现搜索过滤逻辑
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            // 无搜索词时恢复完整列表
+            WallpaperItems = new ObservableCollection<WallpaperItemViewModel>(_allItems);
+        }
+        else
+        {
+            var search = SearchText.ToLowerInvariant();
+            var filtered = _allItems.Where(i =>
+                i.Title.ToLowerInvariant().Contains(search) ||
+                i.Author.ToLowerInvariant().Contains(search) ||
+                i.Tags.Any(t => t.ToLowerInvariant().Contains(search)) ||
+                i.Type.ToLowerInvariant().Contains(search)
+            );
+            WallpaperItems = new ObservableCollection<WallpaperItemViewModel>(filtered);
+        }
+        OnPropertyChanged(nameof(WallpaperItems));
     }
 
     /// <summary>

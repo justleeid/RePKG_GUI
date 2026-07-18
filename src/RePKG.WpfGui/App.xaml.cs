@@ -30,8 +30,8 @@ public partial class App : System.Windows.Application
         services.AddTransient<IExtractService, ExtractService>();
 
         // ViewModel 注册
-        services.AddTransient<MainViewModel>();
-        services.AddTransient<MetadataPanelViewModel>();
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MetadataPanelViewModel>();
 
         // View 注册
         services.AddTransient<MainWindow>();
@@ -41,8 +41,9 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-        mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+        mainWindow.DataContext = mainViewModel;
         mainWindow.Show();
     }
 

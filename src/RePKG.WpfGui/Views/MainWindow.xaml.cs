@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using RePKG.WpfGui.ViewModels;
 
 namespace RePKG.WpfGui.Views;
 
@@ -10,6 +12,23 @@ public partial class MainWindow : System.Windows.Window
     public MainWindow()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is MainViewModel vm)
+        {
+            vm.SearchBoxFocusRequested += () =>
+            {
+                // 使用 Dispatcher 确保在 UI 线程上执行
+                Dispatcher.BeginInvoke(() =>
+                {
+                    var searchBox = FindName("SearchBox") as TextBox;
+                    searchBox?.Focus();
+                });
+            };
+        }
     }
 
     private void OnExitClick(object sender, RoutedEventArgs e)

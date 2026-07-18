@@ -24,10 +24,32 @@
 
         <Border.Style>
             <Style TargetType="Border">
+                <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                <Setter Property="Background" Value="White"/>
                 <Style.Triggers>
+                    <!-- 鼠标悬停效果（未选中状态下） -->
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsMouseOver" Value="True"/>
+                            <Condition Binding="{Binding IsSelected}" Value="False"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="BorderBrush" Value="#BDBDBD"/>
+                        <Setter Property="Background" Value="#F9F9F9"/>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="12" Opacity="0.15" ShadowDepth="4"/>
+                            </Setter.Value>
+                        </Setter>
+                    </MultiTrigger>
+                    <!-- 选中效果 -->
                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                         <Setter Property="BorderBrush" Value="#0078D4"/>
                         <Setter Property="Background" Value="#F0F7FF"/>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="8" Opacity="0.1" ShadowDepth="2"/>
+                            </Setter.Value>
+                        </Setter>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>

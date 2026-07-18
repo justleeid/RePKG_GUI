@@ -27,6 +27,11 @@ public partial class ExtractProgressItemViewModel : ObservableObject
 /// </summary>
 public partial class ExtractProgressViewModel : ObservableObject
 {
+    /// <summary>
+    /// 请求关闭对话框事件
+    /// </summary>
+    public event Action? RequestClose;
+
     [ObservableProperty]
     private int _totalCount;
 
@@ -132,6 +137,6 @@ public partial class ExtractProgressViewModel : ObservableObject
     [RelayCommand]
     private void Close()
     {
-        // 关闭窗口
+        RequestClose?.Invoke();
     }
 }

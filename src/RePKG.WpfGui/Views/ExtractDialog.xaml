@@ -52,15 +52,11 @@
         <!-- 文件过滤 -->
         <StackPanel Grid.Row="3" Margin="0,0,0,16">
             <TextBlock Text="文件过滤" FontWeight="SemiBold" Margin="0,0,0,8"/>
-            <RadioButton Content="提取全部文件" Margin="0,0,0,4">
-                <RadioButton.Style>
-                    <Style TargetType="RadioButton">
-                        <Setter Property="IsChecked" Value="True"/>
-                    </Style>
-                </RadioButton.Style>
-            </RadioButton>
-            <RadioButton Content="仅提取图片 (.png, .jpg)" IsChecked="{Binding FilterImagesOnly}" Margin="0,0,0,4"/>
-            <RadioButton Content="仅提取模型 (.obj, .fbx)" IsChecked="{Binding FilterModelsOnly}" Margin="0,0,0,4"/>
+            <RadioButton Content="提取全部文件" GroupName="FileFilter" IsChecked="True" Margin="0,0,0,4"/>
+            <RadioButton Content="仅提取图片 (.png, .jpg)" GroupName="FileFilter"
+                         IsChecked="{Binding FilterImagesOnly}" Margin="0,0,0,4"/>
+            <RadioButton Content="仅提取模型 (.obj, .fbx)" GroupName="FileFilter"
+                         IsChecked="{Binding FilterModelsOnly}" Margin="0,0,0,4"/>
         </StackPanel>
 
         <!-- 排除选项 -->
