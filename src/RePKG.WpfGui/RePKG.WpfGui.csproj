@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>RePKG.Gui</AssemblyName>
+    <RootNamespace>RePKG.WpfGui</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>RePKG GUI Contributors</Authors>
+    <Description>Wallpaper Engine PKG/TEX 解包工具图形界面</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Deps\repkg\RePKG.Core\RePKG.Core.csproj" />
+    <ProjectReference Include="..\..\Deps\repkg\RePKG.Application\RePKG.Application.csproj" />
+  </ItemGroup>
+
+</Project>
