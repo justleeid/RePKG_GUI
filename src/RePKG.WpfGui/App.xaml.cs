@@ -27,9 +27,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ISteamDetectionService, SteamDetectionService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();
         services.AddTransient<IPkgMetadataService, PkgMetadataService>();
+        services.AddTransient<IExtractService, ExtractService>();
 
         // ViewModel 注册
         services.AddTransient<MainViewModel>();
+        services.AddTransient<MetadataPanelViewModel>();
 
         // View 注册
         services.AddTransient<MainWindow>();

@@ -1,0 +1,88 @@
+<Window x:Class="RePKG.WpfGui.Views.ExtractDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:RePKG.WpfGui.ViewModels"
+        Title="解包选项"
+        Width="500" Height="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题 -->
+        <TextBlock Grid.Row="0" Text="⚙️ 解包选项" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+        <!-- 输出目录 -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="输出目录" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="8" VerticalContentAlignment="Center"/>
+                <Button Grid.Column="1" Content="浏览..." Command="{Binding BrowseOutputDirectoryCommand}"
+                        Padding="12,8" Margin="8,0,0,0"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- 基本选项 -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <TextBlock Text="基本选项" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <CheckBox Content="使用壁纸名称作为子文件夹" IsChecked="{Binding UseNameAsFolder}" Margin="0,0,0,4"/>
+            <CheckBox Content="转换 TEX 为图片 (PNG)" IsChecked="{Binding ConvertTexToImage}" Margin="0,0,0,4"/>
+            <CheckBox Content="复制项目文件 (project.json, preview.jpg)" IsChecked="{Binding CopyProjectFiles}" Margin="0,0,0,4"/>
+            <CheckBox Content="覆盖已存在的文件" IsChecked="{Binding OverwriteExisting}" Margin="0,0,0,0"/>
+        </StackPanel>
+
+        <!-- 文件过滤 -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,16">
+            <TextBlock Text="文件过滤" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <RadioButton Content="提取全部文件" Margin="0,0,0,4">
+                <RadioButton.Style>
+                    <Style TargetType="RadioButton">
+                        <Setter Property="IsChecked" Value="True"/>
+                    </Style>
+                </RadioButton.Style>
+            </RadioButton>
+            <RadioButton Content="仅提取图片 (.png, .jpg)" IsChecked="{Binding FilterImagesOnly}" Margin="0,0,0,4"/>
+            <RadioButton Content="仅提取模型 (.obj, .fbx)" IsChecked="{Binding FilterModelsOnly}" Margin="0,0,0,4"/>
+        </StackPanel>
+
+        <!-- 排除选项 -->
+        <StackPanel Grid.Row="4" Margin="0,0,0,16">
+            <TextBlock Text="排除选项" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <CheckBox Content="排除音频文件 (.wav, .mp3, .ogg)" IsChecked="{Binding ExcludeAudio}"/>
+        </StackPanel>
+
+        <!-- 信息 -->
+        <Border Grid.Row="5" Background="#F0F7FF" CornerRadius="4" Padding="12" Margin="0,0,0,16">
+            <TextBlock TextWrapping="Wrap">
+                <Run Text="将解包 "/>
+                <Run Text="{Binding SelectedCount}" FontWeight="SemiBold"/>
+                <Run Text=" 个壁纸到指定目录"/>
+            </TextBlock>
+        </Border>
+
+        <!-- 按钮 -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="取消" Command="{Binding CancelCommand}" Padding="24,8" Margin="0,0,12,0"/>
+            <Button Content="开始解包" Command="{Binding ConfirmCommand}" Padding="24,8"
+                    Background="#0078D4" Foreground="White"/>
+        </StackPanel>
+    </Grid>
+</Window>

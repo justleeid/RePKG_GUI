@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RePKG.WpfGui.ViewModels"
         xmlns:controls="clr-namespace:RePKG.WpfGui.Views.Controls"
+        xmlns:views="clr-namespace:RePKG.WpfGui.Views"
         Title="RePKG GUI - Wallpaper Engine 解包工具"
         Width="1200" Height="800"
         MinWidth="800" MinHeight="600"
@@ -18,6 +19,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- 菜单栏 -->
@@ -26,6 +28,10 @@
                 <MenuItem Header="打开目录(_O)" Command="{Binding OpenDirectoryCommand}"/>
                 <Separator/>
                 <MenuItem Header="退出(_X)" Click="OnExitClick"/>
+            </MenuItem>
+            <MenuItem Header="编辑(_E)">
+                <MenuItem Header="全选(_A)" Command="{Binding SelectAllCommand}" InputGestureText="Ctrl+A"/>
+                <MenuItem Header="取消全选(_D)" Command="{Binding DeselectAllCommand}" InputGestureText="Ctrl+D"/>
             </MenuItem>
             <MenuItem Header="视图(_V)">
                 <MenuItem Header="切换视图模式" Command="{Binding ToggleViewModeCommand}"/>
@@ -42,6 +48,11 @@
             <Button Content="📁 打开目录" Command="{Binding OpenDirectoryCommand}" Padding="12,6" Margin="0,0,8,0"/>
             <Button Content="🔄 扫描检测目录" Command="{Binding ScanDetectedDirectoryCommand}" Padding="12,6" Margin="0,0,8,0"/>
             <Button Content="{Binding ViewModeToggleText}" Command="{Binding ToggleViewModeCommand}" Padding="12,6" Margin="0,0,8,0"/>
+
+            <Separator Margin="8,0"/>
+
+            <Button Content="📦 解包选中" Command="{Binding ExtractSelectedCommand}" Padding="12,6" Margin="0,0,8,0"
+                    Background="#0078D4" Foreground="White"/>
 
             <Separator Margin="8,0"/>
 
@@ -63,8 +74,13 @@
 
         <!-- 主内容区 -->
         <Grid Grid.Row="2" Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
             <!-- 网格视图 -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
                           Visibility="{Binding IsGridView, Converter={StaticResource BoolToVisibilityConverter}}">
                 <ItemsControl ItemsSource="{Binding WallpaperItems}">
                     <ItemsControl.ItemsPanel>
@@ -81,7 +97,8 @@
             </ScrollViewer>
 
             <!-- 列表视图 -->
-            <DataGrid ItemsSource="{Binding WallpaperItems}"
+            <DataGrid Grid.Row="0"
+                      ItemsSource="{Binding WallpaperItems}"
                       SelectedItem="{Binding SelectedItem}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
@@ -106,6 +123,11 @@
                     </Style>
                 </DataGrid.RowStyle>
             </DataGrid>
+
+            <!-- 详情面板 -->
+            <views:MetadataPanel Grid.Row="1"
+                                 DataContext="{Binding MetadataPanel}"
+                                 Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
         </Grid>
 
         <!-- 状态栏 -->
@@ -135,5 +157,11 @@
                              Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </StatusBarItem>
         </StatusBar>
+
+        <!-- 进度指示器 -->
+        <Border Grid.Row="4" Background="#0078D4" Padding="8"
+                Visibility="{Binding IsExtracting, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="正在解包..." Foreground="White" HorizontalAlignment="Center"/>
+        </Border>
     </Grid>
 </Window>

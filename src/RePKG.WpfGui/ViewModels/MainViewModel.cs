@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using RePKG.WpfGui.Models;
 using RePKG.WpfGui.Services;
+using RePKG.WpfGui.Views;
 
 namespace RePKG.WpfGui.ViewModels;
 
@@ -36,16 +37,22 @@ public partial class MainViewModel : ObservableObject
     private readonly IPkgMetadataService _metadataService;
     private readonly ISteamDetectionService _steamService;
     private readonly IThumbnailService _thumbnailService;
+    private readonly IExtractService _extractService;
+    private readonly MetadataPanelViewModel _metadataPanelViewModel;
     private CancellationTokenSource? _scanCts;
 
     public MainViewModel(
         IPkgMetadataService metadataService,
         ISteamDetectionService steamService,
-        IThumbnailService thumbnailService)
+        IThumbnailService thumbnailService,
+        IExtractService extractService,
+        MetadataPanelViewModel metadataPanelViewModel)
     {
         _metadataService = metadataService;
         _steamService = steamService;
         _thumbnailService = thumbnailService;
+        _extractService = extractService;
+        _metadataPanelViewModel = metadataPanelViewModel;
 
         // 自动检测 Steam 路径
         DetectedWorkshopPath = _steamService.DetectWorkshopDirectory();
@@ -86,6 +93,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedCount;
 
+    [ObservableProperty]
+    private bool _isExtracting;
+
     // ── 计算属性 ──
 
     /// <summary>
@@ -103,6 +113,11 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     public string ViewModeToggleText => CurrentViewMode == ViewMode.Grid ? "☰ 列表" : "⊞ 网格";
 
+    /// <summary>
+    /// 详情面板 ViewModel
+    /// </summary>
+    public MetadataPanelViewModel MetadataPanel => _metadataPanelViewModel;
+
     // ── 属性变更处理 ──
 
     partial void OnCurrentViewModeChanged(ViewMode value)
@@ -115,6 +130,11 @@ public partial class MainViewModel : ObservableObject
     partial void OnSearchTextChanged(string value)
     {
         ApplySearchFilter();
+    }
+
+    partial void OnSelectedItemChanged(WallpaperItemViewModel? value)
+    {
+        _metadataPanelViewModel.UpdateItem(value);
     }
 
     // ── 命令 ──
@@ -272,6 +292,108 @@ public partial class MainViewModel : ObservableObject
             item.IsSelected = false;
         }
         UpdateSelectedCount();
+    }
+
+    /// <summary>
+    /// 解包选中的壁纸
+    /// </summary>
+    [RelayCommand]
+    private async Task ExtractSelectedAsync()
+    {
+        var selectedItems = WallpaperItems.Where(x => x.IsSelected).ToList();
+        if (selectedItems.Count == 0)
+        {
+            StatusText = "请先选择要解包的壁纸";
+            return;
+        }
+
+        // 显示解包选项对话框
+        var dialogViewModel = new ExtractDialogViewModel
+        {
+            SelectedCount = selectedItems.Count
+        };
+        var dialog = new ExtractDialog
+        {
+            DataContext = dialogViewModel,
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        var options = dialogViewModel.GetExtractOptions();
+
+        // 显示进度对话框
+        var progressViewModel = new ExtractProgressViewModel();
+        var progressDialog = new ExtractProgressDialog
+        {
+            DataContext = progressViewModel,
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        IsExtracting = true;
+        StatusText = "正在解包...";
+
+        try
+        {
+            // 创建进度回调
+            var progress = new Progress<ExtractProgress>(info =>
+            {
+                progressViewModel.UpdateProgress(
+                    info.TotalItems,
+                    info.CompletedItems,
+                    info.FailedItems,
+                    info.CurrentItemTitle ?? "");
+
+                progressViewModel.UpdateElapsed(TimeSpan.FromSeconds(0)); // TODO: 计算实际耗时
+            });
+
+            // 执行解包
+            var extractItems = selectedItems.Select(vm => new WallpaperItem
+            {
+                Title = vm.Title,
+                Author = vm.Author,
+                Type = vm.Type,
+                PkgPath = vm.PkgPath,
+                FileSize = vm.FileSize,
+                WorkshopId = vm.WorkshopId,
+                Tags = vm.Tags,
+                PreviewBytes = vm.PreviewBytes
+            });
+
+            var result = await _extractService.ExtractAsync(extractItems, options, progress);
+
+            // 更新进度对话框
+            progressViewModel.MarkCompleted(result.SuccessCount, result.FailedCount, result.Elapsed);
+
+            StatusText = $"解包完成: 成功 {result.SuccessCount}, 失败 {result.FailedCount}";
+
+            // 显示进度对话框（等待用户关闭）
+            progressDialog.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"解包出错: {ex.Message}";
+            System.Windows.MessageBox.Show($"解包出错: {ex.Message}", "错误",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsExtracting = false;
+        }
+    }
+
+    /// <summary>
+    /// 解包单个壁纸（从详情面板）
+    /// </summary>
+    [RelayCommand]
+    private async Task ExtractSingleAsync(WallpaperItemViewModel? item)
+    {
+        if (item == null) return;
+
+        // 临时选中该项
+        item.IsSelected = true;
+        await ExtractSelectedAsync();
     }
 
     // ── 私有方法 ──
