@@ -69,9 +69,9 @@
 
 | 技术 | 版本 | 用途 | 选型理由 |
 |------|------|------|----------|
-| .NET | 8.0 (LTS) | 运行时与 SDK | 跨平台、高性能、长期支持 |
-| C# | 12.0 | 开发语言 | 与 RePKG.Core 同语言，零 FFI 开销 |
-| WPF | .NET 8 | UI 框架 | Windows 原生 UI，成熟稳定，硬件加速渲染 |
+| .NET | 10.0 (LTS) | 运行时与 SDK | 跨平台、高性能、长期支持（支持至 2028.11） |
+| C# | 14.0 | 开发语言 | 与 RePKG.Core 同语言，零 FFI 开销 |
+| WPF | .NET 10 | UI 框架 | Windows 原生 UI，成熟稳定，硬件加速渲染 |
 | XAML | - | 声明式 UI | WPF 原生标记语言，支持热重载 |
 | CommunityToolkit.Mvvm | 8.x | MVVM 工具包 | 简化 MVVM 样板代码，源码生成器 |
 
@@ -971,7 +971,7 @@ public class ThumbnailMemoryManager
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
@@ -1418,7 +1418,7 @@ public partial class App : Application
 | 资源 | 链接 |
 |------|------|
 | RePKG 上游仓库 | https://github.com/notscuffed/repkg |
-| .NET 8 文档 | https://learn.microsoft.com/dotnet/core/whats-new/dotnet-8 |
+| .NET 10 文档 | https://learn.microsoft.com/dotnet/core/whats-new/dotnet-10 |
 | WPF 文档 | https://learn.microsoft.com/dotnet/desktop/wpf |
 | CommunityToolkit.Mvvm | https://github.com/CommunityToolkit/dotnet |
 | Fluent Design 指南 | https://fluent2.microsoft.design |
