@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE / Editor
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude local settings (personal, not shared)
+.claude/settings.local.json
+
+# Build output
+bin/
+obj/
+publish/
+*.exe
+*.dll
+*.pdb
+
+# NuGet
+packages/
+
+# User-specific files
+*.user
+*.suo
+*.cache
