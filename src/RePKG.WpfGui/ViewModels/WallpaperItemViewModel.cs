@@ -102,13 +102,4 @@ public partial class WallpaperItemViewModel : ObservableObject
     public bool HasAuthor => !string.IsNullOrWhiteSpace(Author) &&
                              !Author.Equals("Unknown", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// 状态颜色（扫描失败为红色）
-    /// </summary>
-    public string StatusColor => IsScanFailed ? "#D13438" : "#107C10";
-
-    /// <summary>
-    /// 状态文本
-    /// </summary>
-    public string StatusText => IsScanFailed ? "扫描失败" : "就绪";
 }

@@ -93,43 +93,6 @@ public partial class ExtractProgressViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 添加进度项
-    /// </summary>
-    public void AddItem(string title)
-    {
-        Items.Add(new ExtractProgressItemViewModel
-        {
-            Title = title,
-            Status = "解包中...",
-            StatusIcon = "⟳",
-            StatusColor = "#0078D4"
-        });
-    }
-
-    /// <summary>
-    /// 更新最后一项状态
-    /// </summary>
-    public void UpdateLastItemStatus(bool success)
-    {
-        if (Items.Count > 0)
-        {
-            var lastItem = Items[^1];
-            if (success)
-            {
-                lastItem.Status = "完成";
-                lastItem.StatusIcon = "✓";
-                lastItem.StatusColor = "#107C10";
-            }
-            else
-            {
-                lastItem.Status = "失败";
-                lastItem.StatusIcon = "✗";
-                lastItem.StatusColor = "#D13438";
-            }
-        }
-    }
-
-    /// <summary>
     /// 标记完成
     /// </summary>
     public void MarkCompleted(int success, int failed, System.TimeSpan elapsed)
