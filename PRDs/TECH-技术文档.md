@@ -109,66 +109,46 @@ RePKG.WpfGui/
 ├── RePKG.WpfGui.csproj           # 项目文件，NuGet 引用
 │
 ├── Views/                        # XAML 视图（纯 UI 描述）
-│   ├── MainWindow.xaml           # 主窗口：左侧目录树 + 右侧壁纸列表
-│   ├── MainWindow.xaml.cs        # Code-behind（最小化，仅 UI 逻辑）
+│   ├── MainWindow.xaml           # 主窗口：工具栏 + 壁纸列表 + 详情面板
+│   ├── MainWindow.xaml.cs        # Code-behind（最小化，仅 UI 逻辑 + 拖拽）
 │   ├── MetadataPanel.xaml        # 底部详情面板：标题/作者/标签/大小
 │   ├── MetadataPanel.xaml.cs
 │   ├── ExtractDialog.xaml        # 解包选项对话框
 │   ├── ExtractDialog.xaml.cs
 │   ├── ExtractProgressDialog.xaml # 解包进度对话框
 │   ├── ExtractProgressDialog.xaml.cs
-│   ├── WelcomePage.xaml          # 欢迎页（首次启动）
-│   ├── WelcomePage.xaml.cs
 │   └── Controls/                 # 自定义可复用控件
 │       ├── WallpaperCard.xaml    # 壁纸卡片（网格视图项）
-│       ├── WallpaperListItem.xaml # 壁纸列表行（列表视图项）
-│       ├── TagChip.xaml          # 标签胶囊
-│       └── SkeletonCard.xaml     # 骨架屏占位
+│       └── WallpaperCard.xaml.cs
 │
 ├── ViewModels/                   # 视图模型（UI 状态 + 命令）
-│   ├── MainViewModel.cs          # 主窗口 VM：扫描/筛选/批量操作
+│   ├── MainViewModel.cs          # 主窗口 VM：扫描/筛选/排序/批量操作
 │   ├── WallpaperItemViewModel.cs # 列表项 VM：缩略图/选中状态/元数据
 │   ├── MetadataPanelViewModel.cs # 详情面板 VM
-│   ├── ExtractViewModel.cs       # 解包选项 VM
+│   ├── ExtractDialogViewModel.cs # 解包选项 VM
 │   └── ExtractProgressViewModel.cs # 解包进度 VM
 │
 ├── Models/                       # 数据模型（POCO / DTO）
-│   ├── WallpaperItem.cs          # 标题/作者/类型/大小/预览图路径
+│   ├── WallpaperItem.cs          # 标题/作者/类型/大小/预览图/标签
 │   ├── ProjectInfo.cs            # 映射 project.json 字段
 │   ├── ExtractOptions.cs         # 解包配置参数
-│   └── ScanResult.cs             # 扫描结果 DTO
+│   └── ExtractProgress.cs        # 解包进度模型 + 结果
 │
 ├── Services/                     # 业务逻辑层
 │   ├── IPkgMetadataService.cs    # 元数据提取接口
-│   ├── PkgMetadataService.cs     # 流式读取 PKG 元数据（不全局解密）
-│   ├── IPreviewCacheService.cs   # 缩略图缓存接口
-│   ├── PreviewCacheService.cs    # 缩略图缓存（内存 LRU + 磁盘文件）
+│   ├── PkgMetadataService.cs     # 读取 project.json + preview.jpg（外部文件）
+│   ├── IThumbnailService.cs      # 缩略图服务接口
+│   ├── ThumbnailService.cs       # 两级缓存：内存 LRU + 磁盘文件
 │   ├── IExtractService.cs        # 解包服务接口
 │   ├── ExtractService.cs         # 异步解包 + Progress<T> 进度回调
 │   ├── ISteamDetectionService.cs # Steam 路径检测接口
-│   ├── SteamDetectionService.cs  # 自动检测 Steam 安装路径
-│   ├── ISettingsService.cs       # 用户设置持久化接口
-│   └── SettingsService.cs        # JSON 文件读写用户配置
+│   └── SteamDetectionService.cs  # 注册表 + 默认路径检测
 │
 ├── Converters/                   # XAML 值转换器
-│   ├── BoolToVisibilityConverter.cs
-│   ├── FileSizeConverter.cs      # long → "45.2 MB"
-│   ├── TypeToIconConverter.cs    # "scene" → 🎬 图标
-│   └── BoolInvertConverter.cs
-│
-├── Helpers/                      # 工具类
-│   ├── AsyncRelayCommand.cs      # 异步命令封装
-│   ├── ObservableObject.cs       # 属性变更通知基类
-│   └── VirtualizingCollection.cs # 虚拟滚动数据源
+│   └── BoolToVisibilityConverter.cs
 │
 └── Resources/                    # 静态资源
     ├── Styles/                   # XAML 样式
-    │   ├── Colors.xaml           # 色彩定义
-    │   ├── Typography.xaml       # 字体定义
-    │   ├── Buttons.xaml          # 按钮样式
-    │   ├── Cards.xaml            # 卡片样式
-    │   └── DarkTheme.xaml        # 暗色主题覆盖
-    ├── Icons/                    # 图标资源
     └── Images/                   # 图片资源（Logo、空状态图等）
 
 Deps/
@@ -195,7 +175,7 @@ RePKG.WpfGui.csproj
 
 ### 4.1 元数据提取服务（PkgMetadataService）
 
-**职责：** 对 PKG 文件进行"浅读取"——仅解析头部和 `project.json` / `preview.jpg` 条目，不触发全量解密。
+**职责：** 从 Wallpaper Engine 目录结构中提取元数据。`project.json` 和 `preview.jpg` 是 PKG 同目录下的外部文件，直接读取即可，无需解析 PKG 内部结构。
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -203,34 +183,32 @@ RePKG.WpfGui.csproj
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │  输入: string pkgPath (PKG 文件路径)                       │
+│         → 定位到 PKG 所在目录，读取同目录的外部文件          │
 │                                                          │
 │  ┌────────────────────────────────────────────────┐      │
-│  │ 1. 读取 PKG Header                              │      │
-│  │    ├─ 魔数验证 (PKG 格式标识)                     │      │
-│  │    ├─ 版本号                                      │      │
-│  │    └─ 条目索引表偏移量                             │      │
+│  │ 1. 读取 project.json（外部文件）                  │      │
+│  │    ├─ 路径: {pkgDir}/project.json               │      │
+│  │    ├─ 反序列化为 ProjectInfo                     │      │
+│  │    └─ 提取: title, author, type, tags, etc.     │      │
 │  ├────────────────────────────────────────────────┤      │
-│  │ 2. 解析条目索引表                                 │      │
-│  │    ├─ 遍历所有 Entry 名称                         │      │
-│  │    ├─ 定位 project.json entry                    │      │
-│  │    └─ 定位 preview.jpg entry                     │      │
+│  │ 2. 读取 preview.jpg（外部文件）                    │      │
+│  │    ├─ 路径来自 project.json.preview 字段          │      │
+│  │    └─ 读取为 byte[]，供 ThumbnailService 使用     │      │
 │  ├────────────────────────────────────────────────┤      │
-│  │ 3. 流式解压目标条目                               │      │
-│  │    ├─ project.json → UTF-8 字符串                │      │
-│  │    └─ preview.jpg → byte[]                      │      │
-│  ├────────────────────────────────────────────────┤      │
-│  │ 4. 反序列化 + 组装                                │      │
-│  │    ├─ project.json → ProjectInfo 对象            │      │
-│  │    ├─ preview.jpg → BitmapImage (缩略图)         │      │
-│  │    └─ 组装 WallpaperItem                         │      │
+│  │ 3. 组装 WallpaperItem                           │      │
+│  │    ├─ Title / Author / Type / Tags              │      │
+│  │    ├─ FileSize / WorkshopId / AuthorSteamId    │      │
+│  │    ├─ PreviewBytes / PkgPath / ScanTime        │      │
+│  │    └─ 降级: project.json 缺失时用文件名作为标题    │      │
 │  └────────────────────────────────────────────────┘      │
 │                                                          │
 │  输出: WallpaperItem (标题/作者/类型/缩略图/大小/标签)      │
 │                                                          │
 │  异常处理:                                                │
-│    ├─ 损坏 PKG → 返回 null + 记录警告日志                  │
-│    ├─ 加密 PKG → 返回 null + 标记"不支持"                  │
-│    └─ 缺失 project.json → 降级为仅显示文件名和大小          │
+│    ├─ project.json 缺失 → 降级，用文件名作标题              │
+│    ├─ project.json 解析失败 → 降级，记录 Warning 日志      │
+│    ├─ preview.jpg 缺失 → 无缩略图，不报错                  │
+│    └─ 目录不存在 → 返回 null + Warning 日志               │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -552,10 +530,10 @@ public record ExtractError
        │ 未命中
        ▼
 ┌─────────────┐
-│ PKG 流式读取 │─────────► 解压 preview.jpg
-│ (仅目标条目) │           ├─ 写入 L1 (内存)
+│ 直接解码     │─────────► 从原始字节解码
+│ (首次加载)   │           ├─ 写入 L1 (内存)
 └─────────────┘           ├─ 写入 L2 (磁盘)
-                          └─ 返回 BitmapImage (~50-200ms)
+                          └─ 返回 BitmapImage (~10-50ms)
 ```
 
 ---
@@ -910,21 +888,21 @@ public enum ItemStatus
 
 | 策略 | 说明 | 实现 |
 |------|------|------|
-| **流式读取** | 仅解压 project.json + preview.jpg | PkgReader.ReadEntryContent() 按需读取 |
+| **外部文件读取** | project.json / preview.jpg 从 PKG 同目录读取 | `File.ReadAllText` / `File.ReadAllBytes`（非 PKG 内部） |
 | **异步后台** | 扫描不阻塞 UI 线程 | `Task.Run` + `IProgress<T>` 回调 |
-| **并发控制** | 限制同时解压的 PKG 数量 | `SemaphoreSlim(Environment.ProcessorCount)` |
-| **延迟加载** | 缩略图仅渲染可视区域 | `VirtualizingStackPanel` + `IAsyncVirtualizingCollection` |
+| **并发控制** | 限制同时扫描的 PKG 数量 | `SemaphoreSlim(Environment.ProcessorCount)` |
 | **取消支持** | 扫描过程可随时取消 | `CancellationToken` 传递到每个操作 |
 
 ### 8.2 浏览阶段
 
 | 策略 | 说明 | 实现 |
 |------|------|------|
-| **虚拟滚动** | 仅渲染可视区域的列表项 | WPF `VirtualizingStackPanel.IsVirtualizing="True"` |
-| **缩略图懒加载** | 滚动到可视区时才加载缩略图 | `PriorityBinding` + 占位符图片 |
-| **缩略图缓存** | 两级缓存减少重复 I/O | L1 内存 LRU + L2 磁盘文件 |
-| **UI 虚拟化** | 不创建不可见项的 ViewModel | `IAsyncVirtualizingCollection` 按需创建 |
-| **图片异步解码** | 缩略图在后台线程解码 | `BitmapImage.DecodePixelWidth` + 后台线程 |
+| **简单网格布局** | 使用标准 WPF 控件，避免复杂自定义面板 | `ScrollViewer` + `WrapPanel`（简单可靠） |
+| **缩略图懒加载** | 异步逐个加载，不阻塞 UI | `Task` fire-and-forget + `IsLoadingPreview` 占位符 |
+| **缩略图缓存** | 两级缓存减少重复 I/O | L1 内存 LRU (500张) + L2 磁盘文件 (500MB) |
+| **图片异步解码** | 缩略图在后台线程解码 | `BitmapImage.DecodePixelWidth` + `Freeze()` 跨线程共享 |
+
+> **设计决策：** V1.0 采用 `ScrollViewer + WrapPanel` 而非自定义 `VirtualizingWrapPanel`。理由：实现简单、WPF 原生行为可靠、避免自定义虚拟化面板的布局 bug。当壁纸数量 > 2000 时，可考虑后续版本引入 `VirtualizingPanel`。
 
 ### 8.3 解包阶段
 

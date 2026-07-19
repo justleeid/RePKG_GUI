@@ -4,7 +4,6 @@
         xmlns:vm="clr-namespace:RePKG.WpfGui.ViewModels"
         xmlns:controls="clr-namespace:RePKG.WpfGui.Views.Controls"
         xmlns:views="clr-namespace:RePKG.WpfGui.Views"
-        xmlns:helpers="clr-namespace:RePKG.WpfGui.Helpers"
         Title="RePKG GUI - Wallpaper Engine 解包工具"
         Width="1200" Height="800"
         MinWidth="800" MinHeight="600"

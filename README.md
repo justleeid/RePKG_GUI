@@ -97,10 +97,10 @@ dotnet run --project src/RePKG.WpfGui
 
 ### 性能优化
 
-- **并发扫描** — 使用 SemaphoreSlim 控制并发数
-- **虚拟化列表** — DataGrid 虚拟化支持大量数据
-- **流式写入** — 大文件使用 FileStream 流式写入，降低内存峰值
-- **缩略图缓存** — 内存 LRU + 磁盘缓存，避免重复解码
+- **并发扫描** — 使用 SemaphoreSlim 控制并发数，CPU 核心数上限
+- **简单可靠** — 网格视图采用标准 ScrollViewer + WrapPanel，稳定可靠
+- **缩略图缓存** — 内存 LRU (500张) + 磁盘缓存 (500MB)，SHA256 内容哈希去重
+- **异步加载** — 缩略图 fire-and-forget 异步解码，不阻塞 UI
 
 ---
 
@@ -139,8 +139,6 @@ RePKG_GUI/
 │   │   ├── ExtractService.cs      # 解包服务
 │   │   ├── ThumbnailService.cs    # 缩略图缓存
 │   │   └── SteamDetectionService.cs
-│   ├── Helpers/                   # 工具类
-│   │   └── VirtualizingWrapPanel.cs
 │   └── Converters/                # XAML 值转换器
 └── Deps/repkg/                    # 上游 RePKG（Git Submodule）
 ```
