@@ -25,6 +25,7 @@ public partial class WallpaperItemViewModel : ObservableObject
         _typeIcon = model.TypeIcon;
         _isScanFailed = model.IsScanFailed;
         _errorMessage = model.ErrorMessage;
+        AuthorSteamId = model.AuthorSteamId;
     }
 
     // ── 可观察属性 ──
@@ -74,6 +75,11 @@ public partial class WallpaperItemViewModel : ObservableObject
     /// PKG 文件路径
     /// </summary>
     public string PkgPath => _model.PkgPath;
+
+    /// <summary>
+    /// 作者 Steam ID
+    /// </summary>
+    public string? AuthorSteamId { get; private set; }
 
     /// <summary>
     /// 原始缩略图字节数据

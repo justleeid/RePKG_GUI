@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using RePKG.WpfGui.ViewModels;
@@ -21,14 +22,56 @@ public partial class MainWindow : System.Windows.Window
         {
             vm.SearchBoxFocusRequested += () =>
             {
-                // 使用 Dispatcher 确保在 UI 线程上执行
                 Dispatcher.BeginInvoke(() =>
                 {
                     var searchBox = FindName("SearchBox") as TextBox;
                     searchBox?.Focus();
                 });
             };
+
+            vm.DragDropScanRequested += async (path) =>
+            {
+                await vm.ScanDirectoryCommand.ExecuteAsync(path);
+            };
         }
+    }
+
+    private void OnDragEnter(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (paths?.Length == 1 && Directory.Exists(paths[0]))
+            {
+                e.Effects = DragDropEffects.Copy;
+                DragOverlay.Visibility = Visibility.Visible;
+            }
+        }
+        e.Handled = true;
+    }
+
+    private void OnDragLeave(object sender, DragEventArgs e)
+    {
+        DragOverlay.Visibility = Visibility.Collapsed;
+        e.Handled = true;
+    }
+
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        DragOverlay.Visibility = Visibility.Collapsed;
+
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (paths?.Length > 0 && Directory.Exists(paths[0]))
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.DragDropScanRequested?.Invoke(paths[0]);
+                }
+            }
+        }
+        e.Handled = true;
     }
 
     private void OnExitClick(object sender, RoutedEventArgs e)

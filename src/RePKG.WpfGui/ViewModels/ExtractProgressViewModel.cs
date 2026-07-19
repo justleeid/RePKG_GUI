@@ -33,6 +33,11 @@ public partial class ExtractProgressViewModel : ObservableObject
     /// </summary>
     public event Action? RequestClose;
 
+    /// <summary>
+    /// 请求取消解包事件
+    /// </summary>
+    public event Action? CancelRequested;
+
     [ObservableProperty]
     private int _totalCount;
 
@@ -133,6 +138,14 @@ public partial class ExtractProgressViewModel : ObservableObject
         IsCompleted = true;
         UpdateElapsed(elapsed);
         ResultSummary = $"完成！成功: {success}, 失败: {failed}, 耗时: {ElapsedTime}";
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        CancelRequested?.Invoke();
+        IsExtracting = false;
+        ResultSummary = "正在取消...";
     }
 
     [RelayCommand]

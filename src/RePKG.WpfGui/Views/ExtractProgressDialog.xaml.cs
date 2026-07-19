@@ -22,6 +22,12 @@ public partial class ExtractProgressDialog : Window
             {
                 Close();
             };
+
+            viewModel.CancelRequested += () =>
+            {
+                // 取消后保持对话框打开，让用户看到取消结果
+                // 关闭由 RequestClose 处理
+            };
         }
     }
 }

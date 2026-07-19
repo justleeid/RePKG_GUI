@@ -1,7 +1,12 @@
 <UserControl x:Class="RePKG.WpfGui.Views.MetadataPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:RePKG.WpfGui.ViewModels">
+             xmlns:vm="clr-namespace:RePKG.WpfGui.ViewModels"
+             xmlns:converters="clr-namespace:RePKG.WpfGui.Converters">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
 
     <Border Background="White"
             BorderBrush="#E0E0E0"
@@ -32,7 +37,12 @@
                 <!-- 作者 -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <TextBlock Text="作者: " Foreground="#616161"/>
-                    <TextBlock Text="{Binding Author}" Foreground="#0078D4"/>
+                    <TextBlock>
+                        <Hyperlink Command="{Binding OpenAuthorSteamUrlCommand}"
+                                   Foreground="#0067C0">
+                            <Run Text="{Binding Author}"/>
+                        </Hyperlink>
+                    </TextBlock>
                 </StackPanel>
 
                 <!-- 类型 -->

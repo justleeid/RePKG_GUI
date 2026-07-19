@@ -46,7 +46,16 @@ public partial class MetadataPanelViewModel : ObservableObject
     private string _workshopUrl = string.Empty;
 
     [ObservableProperty]
+    private string? _authorSteamId;
+
+    [ObservableProperty]
+    private string _authorSteamUrl = string.Empty;
+
+    [ObservableProperty]
     private bool _hasWorkshopId;
+
+    [ObservableProperty]
+    private bool _hasAuthorSteamId;
 
     /// <summary>
     /// 更新显示的壁纸项
@@ -74,7 +83,29 @@ public partial class MetadataPanelViewModel : ObservableObject
         WorkshopUrl = HasWorkshopId
             ? $"https://steamcommunity.com/sharedfiles/filedetails/?id={item.WorkshopId}"
             : string.Empty;
+        AuthorSteamId = item.AuthorSteamId;
+        HasAuthorSteamId = !string.IsNullOrEmpty(item.AuthorSteamId);
+        AuthorSteamUrl = HasAuthorSteamId
+            ? $"https://steamcommunity.com/profiles/{item.AuthorSteamId}"
+            : string.Empty;
         IsVisible = true;
+    }
+
+    [RelayCommand]
+    private void OpenAuthorSteamUrl()
+    {
+        if (!string.IsNullOrEmpty(AuthorSteamUrl))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = AuthorSteamUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
     }
 
     [RelayCommand]

@@ -79,6 +79,7 @@ public class PkgMetadataService : IPkgMetadataService
                 PkgPath = pkgPath,
                 FileSize = fileInfo.Length,
                 WorkshopId = projectInfo?.WorkshopId ?? string.Empty,
+                AuthorSteamId = projectInfo?.AuthorSteamId,
                 Tags = projectInfo?.Tags ?? Array.Empty<string>(),
                 PreviewBytes = previewEntry?.Bytes,
                 ScanTime = DateTime.UtcNow

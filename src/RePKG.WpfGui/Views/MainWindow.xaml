@@ -7,7 +7,11 @@
         Title="RePKG GUI - Wallpaper Engine 解包工具"
         Width="1200" Height="800"
         MinWidth="800" MinHeight="600"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        AllowDrop="True"
+        DragEnter="OnDragEnter"
+        DragLeave="OnDragLeave"
+        Drop="OnDrop">
 
     <Window.InputBindings>
         <KeyBinding Key="A" Modifiers="Control" Command="{Binding SelectAllCommand}"/>
@@ -166,6 +170,16 @@
         <Border Grid.Row="4" Background="#0078D4" Padding="8"
                 Visibility="{Binding IsExtracting, Converter={StaticResource BoolToVisibilityConverter}}">
             <TextBlock Text="正在解包..." Foreground="White" HorizontalAlignment="Center"/>
+        </Border>
+
+        <!-- 拖拽导入覆盖层 -->
+        <Border x:Name="DragOverlay" Grid.RowSpan="5"
+                Background="#800078D4" Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="📁" FontSize="64" HorizontalAlignment="Center"/>
+                <TextBlock Text="释放以扫描此目录" FontSize="24" FontWeight="SemiBold"
+                           Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

@@ -41,6 +41,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IExtractService _extractService;
     private readonly MetadataPanelViewModel _metadataPanelViewModel;
     private CancellationTokenSource? _scanCts;
+    private CancellationTokenSource? _extractCts;
     private List<WallpaperItemViewModel> _allItems = []; // 未过滤的完整列表
 
     public MainViewModel(
@@ -264,6 +265,11 @@ public partial class MainViewModel : ObservableObject
     public event Action? SearchBoxFocusRequested;
 
     /// <summary>
+    /// 拖拽导入扫描请求事件（由 View 订阅）
+    /// </summary>
+    public event Action<string>? DragDropScanRequested;
+
+    /// <summary>
     /// 取消扫描
     /// </summary>
     [RelayCommand]
@@ -348,8 +354,32 @@ public partial class MainViewModel : ObservableObject
 
         var options = dialogViewModel.GetExtractOptions();
 
-        // 显示进度对话框
+        // 创建取消令牌
+        _extractCts = new CancellationTokenSource();
+        var ct = _extractCts.Token;
+
+        // 准备进度对话框
         var progressViewModel = new ExtractProgressViewModel();
+        progressViewModel.TotalCount = selectedItems.Count;
+
+        // 预填充所有进度项
+        foreach (var item in selectedItems)
+        {
+            progressViewModel.Items.Add(new ExtractProgressItemViewModel
+            {
+                Title = item.Title,
+                Status = "等待中",
+                StatusIcon = "○",
+                StatusColor = "#9E9E9E"
+            });
+        }
+
+        // 取消按钮绑定
+        progressViewModel.CancelRequested += () =>
+        {
+            _extractCts.Cancel();
+        };
+
         var progressDialog = new ExtractProgressDialog
         {
             DataContext = progressViewModel,
@@ -362,45 +392,86 @@ public partial class MainViewModel : ObservableObject
         try
         {
             // 创建进度回调
+            var startTime = DateTime.UtcNow;
+            int currentIndex = -1;
             var progress = new Progress<ExtractProgress>(info =>
             {
+                // 更新进度条
                 progressViewModel.UpdateProgress(
                     info.TotalItems,
                     info.CompletedItems,
                     info.FailedItems,
                     info.CurrentItemTitle ?? "");
 
-                progressViewModel.UpdateElapsed(TimeSpan.FromSeconds(0)); // TODO: 计算实际耗时
+                progressViewModel.UpdateElapsed(DateTime.UtcNow - startTime);
+
+                // 更新进度列表项状态
+                if (info.Status == ExtractItemStatus.Extracting)
+                {
+                    currentIndex++;
+                    if (currentIndex < progressViewModel.Items.Count)
+                    {
+                        var item = progressViewModel.Items[currentIndex];
+                        item.Status = "解包中...";
+                        item.StatusIcon = "⟳";
+                        item.StatusColor = "#0078D4";
+                    }
+                }
+                else if (info.Status == ExtractItemStatus.Completed)
+                {
+                    progressViewModel.UpdateLastItemStatus(true);
+                }
             });
 
-            // 执行解包（直接使用 ViewModel 中的底层 Model 引用）
-            var extractItems = selectedItems.Select(vm => vm.Model);
+            // 进度对话框在后台线程打开（ShowDialog 会阻塞）
+            var progressDialogTask = System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                progressDialog.ShowDialog();
+            });
 
-            var result = await _extractService.ExtractAsync(extractItems, options, progress);
+            // 执行解包
+            var extractItems = selectedItems.Select(vm => vm.Model);
+            var result = await _extractService.ExtractAsync(extractItems, options, progress, ct);
+
+            // 更新失败项状态
+            foreach (var error in result.Errors)
+            {
+                var idx = selectedItems.FindIndex(vm => vm.PkgPath == error.PkgPath);
+                if (idx >= 0 && idx < progressViewModel.Items.Count)
+                {
+                    progressViewModel.Items[idx].Status = "失败";
+                    progressViewModel.Items[idx].StatusIcon = "✗";
+                    progressViewModel.Items[idx].StatusColor = "#D13438";
+                }
+            }
 
             // 更新已解包状态
             foreach (var vm in selectedItems)
             {
-                vm.Model.IsExtracted = true;
+                if (!result.Errors.Any(e => e.PkgPath == vm.PkgPath))
+                    vm.Model.IsExtracted = true;
             }
 
-            // 更新进度对话框
+            // 标记完成
             progressViewModel.MarkCompleted(result.SuccessCount, result.FailedCount, result.Elapsed);
-
             StatusText = $"解包完成: 成功 {result.SuccessCount}, 失败 {result.FailedCount}";
-
-            // 显示进度对话框（等待用户关闭）
-            progressDialog.ShowDialog();
+        }
+        catch (OperationCanceledException)
+        {
+            progressViewModel.MarkCompleted(0, 0, TimeSpan.Zero);
+            progressViewModel.ResultSummary = "解包已取消";
+            StatusText = "解包已取消";
         }
         catch (Exception ex)
         {
             StatusText = $"解包出错: {ex.Message}";
-            System.Windows.MessageBox.Show($"解包出错: {ex.Message}", "错误",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            progressViewModel.MarkCompleted(0, selectedItems.Count, TimeSpan.Zero);
+            progressViewModel.ResultSummary = $"错误: {ex.Message}";
         }
         finally
         {
             IsExtracting = false;
+            _extractCts = null;
         }
     }
 

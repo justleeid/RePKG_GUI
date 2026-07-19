@@ -48,6 +48,11 @@ public class WallpaperItem
     public byte[]? PreviewBytes { get; set; }
 
     /// <summary>
+    /// 作者 Steam ID
+    /// </summary>
+    public string? AuthorSteamId { get; set; }
+
+    /// <summary>
     /// 元数据提取时间
     /// </summary>
     public DateTime ScanTime { get; set; } = DateTime.UtcNow;
