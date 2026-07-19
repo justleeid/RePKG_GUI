@@ -12,12 +12,25 @@
 
 ## ✨ 功能特性
 
+### 浏览与预览
 - 🔍 **可视化浏览** — 网格/列表视图展示壁纸缩略图、标题、作者、类型
 - 📊 **元数据预览** — 不解包即可查看 project.json 中的标题、标签、大小等信息
+- 🖼️ **缩略图缓存** — 两级缓存（内存 LRU 500张 + 磁盘 500MB），快速加载
+- 📂 **拖拽导入** — 直接拖拽文件夹到窗口即可扫描
+
+### 解包功能
 - ✂️ **选择性解包** — 勾选想要的壁纸，一键解包到指定目录
-- 🖼️ **TEX 转换** — 自动将 .tex 纹理文件转换为 PNG 图片
+- 🖼️ **TEX 转换** — 自动将 .tex 纹理文件转换为 PNG/GIF/MP4
+- 📁 **灵活输出** — 支持按壁纸分文件夹或所有文件放在同一目录
+- 🔍 **文件过滤** — 仅提取图片、仅提取模型、排除音频等
+
+### 其他功能
 - 🔗 **Steam 集成** — 自动检测 Steam 安装路径和 Workshop 目录
-- 🎯 **零学习成本** — 无需了解 CLI 参数，纯图形界面操作
+- 📋 **详情面板** — 查看完整元数据、Workshop 链接、标签等
+- 🔄 **排序搜索** — 按标题/作者/大小/类型排序，支持关键词搜索
+- ⌨️ **快捷键** — Ctrl+A 全选、Ctrl+D 取消全选、Ctrl+F 搜索
+
+---
 
 ## 🚀 快速开始
 
@@ -46,6 +59,31 @@ dotnet build
 dotnet run --project src/RePKG.WpfGui
 ```
 
+---
+
+## 📖 使用说明
+
+### 基本流程
+
+1. **启动应用** — 自动检测 Steam Workshop 目录
+2. **扫描目录** — 点击"扫描检测目录"或"打开目录"选择文件夹
+3. **浏览壁纸** — 在网格/列表视图中查看壁纸缩略图和信息
+4. **选择壁纸** — 点击卡片选中，支持 Ctrl+A 全选
+5. **解包** — 点击"解包选中"，配置选项后开始解包
+
+### 解包选项
+
+| 选项 | 说明 |
+|------|------|
+| 使用壁纸名称作为子文件夹 | 每个壁纸解包到独立文件夹 |
+| 所有文件放在同一个目录下 | 不按壁纸分文件夹 |
+| 转换 TEX 为图片 | 自动将 .tex 转换为 PNG（不输出原始 .tex） |
+| 仅提取图片 | 只提取图片文件（含转换后的 TEX） |
+| 仅提取模型 | 只提取 .obj/.fbx 模型文件 |
+| 排除音频 | 排除 .wav/.mp3 等音频文件 |
+
+---
+
 ## 🏗️ 技术架构
 
 | 层级 | 技术 | 说明 |
@@ -53,8 +91,18 @@ dotnet run --project src/RePKG.WpfGui
 | UI 框架 | WPF (.NET 10) | Windows 原生桌面框架 |
 | 架构模式 | MVVM | CommunityToolkit.Mvvm |
 | 依赖注入 | Microsoft.Extensions.DependencyInjection | DI 容器管理服务生命周期 |
+| 日志 | Microsoft.Extensions.Logging | 结构化日志 |
 | 解包引擎 | RePKG.Core | 上游 notscuffed/repkg 核心类库（Git Submodule） |
 | 目标平台 | Windows 10 1809+ | x64 |
+
+### 性能优化
+
+- **并发扫描** — 使用 SemaphoreSlim 控制并发数
+- **虚拟化列表** — DataGrid 虚拟化支持大量数据
+- **流式写入** — 大文件使用 FileStream 流式写入，降低内存峰值
+- **缩略图缓存** — 内存 LRU + 磁盘缓存，避免重复解码
+
+---
 
 ## 📁 项目结构
 
@@ -69,14 +117,35 @@ RePKG_GUI/
 │   └── TECH-技术文档.md
 ├── src/RePKG.WpfGui/              # GUI 主项目
 │   ├── Models/                    # 数据模型
+│   │   ├── WallpaperItem.cs       # 壁纸数据
+│   │   ├── ProjectInfo.cs         # project.json 映射
+│   │   ├── ExtractOptions.cs      # 解包配置
+│   │   └── ExtractProgress.cs     # 进度模型
 │   ├── ViewModels/                # MVVM ViewModel 层
+│   │   ├── MainViewModel.cs       # 主窗口逻辑
+│   │   ├── WallpaperItemViewModel.cs
+│   │   ├── MetadataPanelViewModel.cs
+│   │   ├── ExtractDialogViewModel.cs
+│   │   └── ExtractProgressViewModel.cs
 │   ├── Views/                     # XAML 视图
+│   │   ├── MainWindow.xaml
+│   │   ├── MetadataPanel.xaml
+│   │   ├── ExtractDialog.xaml
+│   │   ├── ExtractProgressDialog.xaml
 │   │   └── Controls/              # 自定义控件
+│   │       └── WallpaperCard.xaml
 │   ├── Services/                  # 业务逻辑服务
-│   ├── Converters/                # XAML 值转换器
-│   └── Resources/                 # 静态资源
+│   │   ├── PkgMetadataService.cs  # 元数据提取
+│   │   ├── ExtractService.cs      # 解包服务
+│   │   ├── ThumbnailService.cs    # 缩略图缓存
+│   │   └── SteamDetectionService.cs
+│   ├── Helpers/                   # 工具类
+│   │   └── VirtualizingWrapPanel.cs
+│   └── Converters/                # XAML 值转换器
 └── Deps/repkg/                    # 上游 RePKG（Git Submodule）
 ```
+
+---
 
 ## 🤝 致谢
 
