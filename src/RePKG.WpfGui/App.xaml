@@ -6,7 +6,6 @@
         <ResourceDictionary>
             <!-- 转换器 -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-            <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
