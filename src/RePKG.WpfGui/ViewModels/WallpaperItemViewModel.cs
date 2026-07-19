@@ -107,4 +107,21 @@ public partial class WallpaperItemViewModel : ObservableObject
     /// </summary>
     public bool HasNoPreview => PreviewImage == null && !IsLoadingPreview && !IsScanFailed;
 
+    // ── 属性变更处理 ──
+
+    partial void OnPreviewImageChanged(BitmapImage? value)
+    {
+        OnPropertyChanged(nameof(HasNoPreview));
+    }
+
+    partial void OnIsLoadingPreviewChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasNoPreview));
+    }
+
+    partial void OnIsScanFailedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasNoPreview));
+    }
+
 }

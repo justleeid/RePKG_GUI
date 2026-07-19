@@ -14,10 +14,6 @@
         DragLeave="OnDragLeave"
         Drop="OnDrop">
 
-    <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-    </Window.Resources>
-
     <Window.InputBindings>
         <KeyBinding Key="A" Modifiers="Control" Command="{Binding SelectAllCommand}"/>
         <KeyBinding Key="D" Modifiers="Control" Command="{Binding DeselectAllCommand}"/>

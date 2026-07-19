@@ -66,17 +66,16 @@
                                      Content="提取全部文件"
                                      GroupName="FileFilter" IsChecked="True"/>
                         <RadioButton Style="{StaticResource FluentRadioButton}"
-                                     Content="仅提取图片 (.png, .jpg)"
+                                     Content="仅提取图片 (.png, .jpg, .tex)"
                                      GroupName="FileFilter"
                                      IsChecked="{Binding FilterImagesOnly}"/>
                         <RadioButton Style="{StaticResource FluentRadioButton}"
                                      Content="仅提取模型 (.obj, .fbx)"
                                      GroupName="FileFilter"
                                      IsChecked="{Binding FilterModelsOnly}"/>
-                        <RadioButton Style="{StaticResource FluentRadioButton}"
-                                     Content="排除音频文件 (.wav, .mp3, .ogg)"
-                                     GroupName="FileFilter"
-                                     IsChecked="{Binding ExcludeAudio}" Margin="0,0,0,0"/>
+                        <CheckBox Style="{StaticResource FluentCheckBox}"
+                                  Content="排除音频文件 (.wav, .mp3, .ogg)"
+                                  IsChecked="{Binding ExcludeAudio}" Margin="0,0,0,0"/>
                     </StackPanel>
                 </Border>
 
