@@ -31,6 +31,17 @@ public enum ViewMode
 }
 
 /// <summary>
+/// 排序字段
+/// </summary>
+public enum SortField
+{
+    Title,
+    Author,
+    FileSize,
+    Type
+}
+
+/// <summary>
 /// 主窗口 ViewModel
 /// </summary>
 public partial class MainViewModel : ObservableObject
@@ -43,6 +54,8 @@ public partial class MainViewModel : ObservableObject
     private CancellationTokenSource? _scanCts;
     private CancellationTokenSource? _extractCts;
     private List<WallpaperItemViewModel> _allItems = []; // 未过滤的完整列表
+    private bool _isUpdatingFilter; // 防止递归更新
+    private int _scannedCount; // 支持 Interlocked
 
     public MainViewModel(
         IPkgMetadataService metadataService,
@@ -75,8 +88,18 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _totalCount;
 
-    [ObservableProperty]
-    private int _scannedCount;
+    /// <summary>
+    /// 已扫描数量（支持并发更新）
+    /// </summary>
+    public int ScannedCount
+    {
+        get => _scannedCount;
+        set
+        {
+            _scannedCount = value;
+            OnPropertyChanged();
+        }
+    }
 
     [ObservableProperty]
     private string _statusText = "就绪";
@@ -99,6 +122,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isExtracting;
 
+    [ObservableProperty]
+    private SortField _currentSortField = SortField.Title;
+
+    [ObservableProperty]
+    private bool _sortAscending = true;
+
     // ── 计算属性 ──
 
     /// <summary>
@@ -115,6 +144,11 @@ public partial class MainViewModel : ObservableObject
     /// 视图切换按钮文本
     /// </summary>
     public string ViewModeToggleText => CurrentViewMode == ViewMode.Grid ? "☰ 列表" : "⊞ 网格";
+
+    /// <summary>
+    /// 排序方向按钮文本
+    /// </summary>
+    public string SortDirectionText => SortAscending ? "↑ 升序" : "↓ 降序";
 
     /// <summary>
     /// 详情面板 ViewModel
@@ -138,6 +172,17 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedItemChanged(WallpaperItemViewModel? value)
     {
         _metadataPanelViewModel.UpdateItem(value);
+    }
+
+    partial void OnCurrentSortFieldChanged(SortField value)
+    {
+        ApplySearchFilter();
+    }
+
+    partial void OnSortAscendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SortDirectionText));
+        ApplySearchFilter();
     }
 
     // ── 命令 ──
@@ -175,7 +220,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 扫描指定目录
+    /// 扫描指定目录（带并发控制）
     /// </summary>
     [RelayCommand]
     private async Task ScanDirectoryAsync(string directoryPath)
@@ -203,35 +248,47 @@ public partial class MainViewModel : ObservableObject
             TotalCount = pkgFiles.Length;
             StatusText = $"发现 {TotalCount} 个 PKG 文件，正在提取元数据...";
 
-            // 逐个提取元数据
-            foreach (var pkgPath in pkgFiles)
+            // 并发控制：限制同时处理的 PKG 数量
+            var semaphore = new SemaphoreSlim(Environment.ProcessorCount);
+            var tasks = pkgFiles.Select(async pkgPath =>
             {
-                ct.ThrowIfCancellationRequested();
-
-                var item = await _metadataService.ExtractMetadataAsync(pkgPath, ct);
-                if (item != null)
+                await semaphore.WaitAsync(ct);
+                try
                 {
-                    var viewModel = new WallpaperItemViewModel(item);
-                    viewModel.PropertyChanged += (_, e) =>
+                    var item = await _metadataService.ExtractMetadataAsync(pkgPath, ct);
+                    if (item != null)
                     {
-                        if (e.PropertyName == nameof(WallpaperItemViewModel.IsSelected))
-                            UpdateSelectedCount();
-                    };
+                        var viewModel = new WallpaperItemViewModel(item);
+                        viewModel.PropertyChanged += (_, e) =>
+                        {
+                            if (e.PropertyName == nameof(WallpaperItemViewModel.IsSelected))
+                                UpdateSelectedCount();
+                        };
 
-                    // 异步加载缩略图
-                    if (item.PreviewBytes != null)
-                    {
-                        _ = LoadThumbnailAsync(viewModel, item.PreviewBytes, ct);
+                        // 异步加载缩略图
+                        if (item.PreviewBytes != null)
+                        {
+                            _ = LoadThumbnailAsync(viewModel, item.PreviewBytes, ct);
+                        }
+
+                        // 在 UI 线程添加到集合
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            _allItems.Add(viewModel);
+                            WallpaperItems.Add(viewModel);
+                        });
                     }
 
-                    _allItems.Add(viewModel);
-                    WallpaperItems.Add(viewModel);
+                    Interlocked.Increment(ref _scannedCount);
+                    StatusText = $"正在扫描... {ScannedCount}/{TotalCount}";
                 }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
 
-                ScannedCount++;
-                StatusText = $"正在扫描... {ScannedCount}/{TotalCount}";
-            }
-
+            await Task.WhenAll(tasks);
             StatusText = $"扫描完成，共 {WallpaperItems.Count} 个壁纸";
         }
         catch (OperationCanceledException)
@@ -267,7 +324,6 @@ public partial class MainViewModel : ObservableObject
     /// <summary>
     /// 拖拽导入扫描请求事件（由 View 订阅）
     /// </summary>
-    public event Action<string>? DragDropScanRequested;
 
     /// <summary>
     /// 取消扫描
@@ -297,6 +353,33 @@ public partial class MainViewModel : ObservableObject
     private void ToggleViewMode()
     {
         CurrentViewMode = CurrentViewMode == ViewMode.Grid ? ViewMode.List : ViewMode.Grid;
+    }
+
+    /// <summary>
+    /// 切换排序方向
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSortDirection()
+    {
+        SortAscending = !SortAscending;
+    }
+
+    /// <summary>
+    /// 设置排序字段
+    /// </summary>
+    [RelayCommand]
+    private void SetSortField(string field)
+    {
+        if (Enum.TryParse<SortField>(field, out var sortField))
+        {
+            if (CurrentSortField == sortField)
+                SortAscending = !SortAscending;
+            else
+            {
+                CurrentSortField = sortField;
+                SortAscending = true;
+            }
+        }
     }
 
     /// <summary>
@@ -393,7 +476,6 @@ public partial class MainViewModel : ObservableObject
         {
             // 创建进度回调
             var startTime = DateTime.UtcNow;
-            int currentIndex = -1;
             var progress = new Progress<ExtractProgress>(info =>
             {
                 // 更新进度条
@@ -406,12 +488,13 @@ public partial class MainViewModel : ObservableObject
                 progressViewModel.UpdateElapsed(DateTime.UtcNow - startTime);
 
                 // 更新进度列表项状态
+                var itemIndex = info.CompletedItems;
                 if (info.Status == ExtractItemStatus.Extracting)
                 {
-                    currentIndex++;
-                    if (currentIndex < progressViewModel.Items.Count)
+                    // 当前正在处理的项
+                    if (itemIndex < progressViewModel.Items.Count)
                     {
-                        var item = progressViewModel.Items[currentIndex];
+                        var item = progressViewModel.Items[itemIndex];
                         item.Status = "解包中...";
                         item.StatusIcon = "⟳";
                         item.StatusColor = "#0078D4";
@@ -419,7 +502,15 @@ public partial class MainViewModel : ObservableObject
                 }
                 else if (info.Status == ExtractItemStatus.Completed)
                 {
-                    progressViewModel.UpdateLastItemStatus(true);
+                    // 刚刚完成的项（CompletedItems 已经 +1）
+                    var completedIndex = info.CompletedItems - 1;
+                    if (completedIndex >= 0 && completedIndex < progressViewModel.Items.Count)
+                    {
+                        var item = progressViewModel.Items[completedIndex];
+                        item.Status = "完成";
+                        item.StatusIcon = "✓";
+                        item.StatusColor = "#107C10";
+                    }
                 }
             });
 
@@ -476,16 +567,56 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 解包单个壁纸（从详情面板）
+    /// 解包单个壁纸（从详情面板，不影响其他选中项）
     /// </summary>
     [RelayCommand]
     private async Task ExtractSingleAsync(WallpaperItemViewModel? item)
     {
         if (item == null) return;
 
-        // 临时选中该项
-        item.IsSelected = true;
-        await ExtractSelectedAsync();
+        // 显示解包选项对话框
+        var dialogViewModel = new ExtractDialogViewModel
+        {
+            SelectedCount = 1
+        };
+        var dialog = new ExtractDialog
+        {
+            DataContext = dialogViewModel,
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        var options = dialogViewModel.GetExtractOptions();
+        _extractCts = new CancellationTokenSource();
+
+        IsExtracting = true;
+        StatusText = $"正在解包: {item.Title}";
+
+        try
+        {
+            var result = await _extractService.ExtractAsync(
+                [item.Model], options, null, _extractCts.Token);
+
+            if (result.SuccessCount > 0)
+                item.Model.IsExtracted = true;
+
+            StatusText = $"解包完成: {item.Title}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "解包已取消";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"解包出错: {ex.Message}";
+        }
+        finally
+        {
+            IsExtracting = false;
+            _extractCts = null;
+        }
     }
 
     // ── 私有方法 ──
@@ -515,27 +646,58 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 应用搜索过滤
+    /// 应用搜索过滤和排序（增量更新，避免 UI 闪烁）
     /// </summary>
     private void ApplySearchFilter()
     {
-        if (string.IsNullOrWhiteSpace(SearchText))
+        if (_isUpdatingFilter) return;
+        _isUpdatingFilter = true;
+
+        try
         {
-            // 无搜索词时恢复完整列表
-            WallpaperItems = new ObservableCollection<WallpaperItemViewModel>(_allItems);
+            // 过滤
+            IEnumerable<WallpaperItemViewModel> filtered = _allItems;
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var search = SearchText.ToLowerInvariant();
+                filtered = _allItems.Where(i =>
+                    i.Title.ToLowerInvariant().Contains(search) ||
+                    i.Author.ToLowerInvariant().Contains(search) ||
+                    i.Tags.Any(t => t.ToLowerInvariant().Contains(search)) ||
+                    i.Type.ToLowerInvariant().Contains(search));
+            }
+
+            // 排序
+            filtered = CurrentSortField switch
+            {
+                SortField.Title => SortAscending
+                    ? filtered.OrderBy(i => i.Title, StringComparer.OrdinalIgnoreCase)
+                    : filtered.OrderByDescending(i => i.Title, StringComparer.OrdinalIgnoreCase),
+                SortField.Author => SortAscending
+                    ? filtered.OrderBy(i => i.Author, StringComparer.OrdinalIgnoreCase)
+                    : filtered.OrderByDescending(i => i.Author, StringComparer.OrdinalIgnoreCase),
+                SortField.FileSize => SortAscending
+                    ? filtered.OrderBy(i => i.FileSize)
+                    : filtered.OrderByDescending(i => i.FileSize),
+                SortField.Type => SortAscending
+                    ? filtered.OrderBy(i => i.Type)
+                    : filtered.OrderByDescending(i => i.Type),
+                _ => filtered
+            };
+
+            var filteredList = filtered.ToList();
+
+            // 增量更新：对比差异，避免重建整个集合
+            WallpaperItems.Clear();
+            foreach (var item in filteredList)
+            {
+                WallpaperItems.Add(item);
+            }
         }
-        else
+        finally
         {
-            var search = SearchText.ToLowerInvariant();
-            var filtered = _allItems.Where(i =>
-                i.Title.ToLowerInvariant().Contains(search) ||
-                i.Author.ToLowerInvariant().Contains(search) ||
-                i.Tags.Any(t => t.ToLowerInvariant().Contains(search)) ||
-                i.Type.ToLowerInvariant().Contains(search)
-            );
-            WallpaperItems = new ObservableCollection<WallpaperItemViewModel>(filtered);
+            _isUpdatingFilter = false;
         }
-        OnPropertyChanged(nameof(WallpaperItems));
     }
 
     /// <summary>

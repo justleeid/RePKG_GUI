@@ -16,6 +16,11 @@ public class ExtractOptions
     public bool UseNameAsFolder { get; set; } = true;
 
     /// <summary>
+    /// 所有文件放在同一个目录下（对应 -s 参数）
+    /// </summary>
+    public bool SingleDirectory { get; set; }
+
+    /// <summary>
     /// 转换 TEX 为图片（对应 --no-tex-convert 取反）
     /// </summary>
     public bool ConvertTexToImage { get; set; } = true;

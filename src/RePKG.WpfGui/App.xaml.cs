@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RePKG.WpfGui.Services;
 using RePKG.WpfGui.ViewModels;
 using RePKG.WpfGui.Views;
@@ -14,6 +16,7 @@ namespace RePKG.WpfGui;
 public partial class App : System.Windows.Application
 {
     private readonly ServiceProvider _serviceProvider;
+    private readonly ILogger<App> _logger;
 
     public App()
     {
@@ -24,15 +27,18 @@ public partial class App : System.Windows.Application
         var services = new ServiceCollection();
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
+        _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        _logger.LogError(e.Exception, "发生未处理的异常");
+
         System.Windows.MessageBox.Show(
-            $"发生未处理的异常:\n\n{e.Exception.Message}\n\n{e.Exception.StackTrace}",
-            "错误",
+            "程序遇到了一个意外错误，请重试。\n\n如果问题持续出现，请重启应用程序。",
+            "RePKG GUI",
             System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Error);
+            System.Windows.MessageBoxImage.Warning);
         e.Handled = true;
     }
 
@@ -40,9 +46,11 @@ public partial class App : System.Windows.Application
     {
         if (e.ExceptionObject is Exception ex)
         {
+            _logger.LogCritical(ex, "发生严重错误");
+
             System.Windows.MessageBox.Show(
-                $"发生严重错误:\n\n{ex.Message}\n\n{ex.StackTrace}",
-                "错误",
+                "程序遇到了严重错误，需要关闭。\n\n请重启应用程序。",
+                "RePKG GUI",
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
         }
@@ -50,6 +58,14 @@ public partial class App : System.Windows.Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        // 日志配置
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.AddDebug();
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
         // 服务注册
         services.AddSingleton<ISteamDetectionService, SteamDetectionService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();

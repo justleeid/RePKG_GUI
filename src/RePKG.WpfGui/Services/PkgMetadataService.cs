@@ -1,11 +1,10 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using RePKG.Application.Package;
+using Microsoft.Extensions.Logging;
 using RePKG.WpfGui.Models;
 
 namespace RePKG.WpfGui.Services;
@@ -15,61 +14,88 @@ namespace RePKG.WpfGui.Services;
 /// </summary>
 public class PkgMetadataService : IPkgMetadataService
 {
+    private readonly ILogger<PkgMetadataService> _logger;
+
+    public PkgMetadataService(ILogger<PkgMetadataService> logger)
+    {
+        _logger = logger;
+    }
+
     /// <inheritdoc/>
     public async Task<WallpaperItem?> ExtractMetadataAsync(string pkgPath, CancellationToken cancellationToken = default)
     {
         return await Task.Run(() => ExtractMetadata(pkgPath, cancellationToken), cancellationToken);
     }
 
-    private static WallpaperItem? ExtractMetadata(string pkgPath, CancellationToken cancellationToken)
+    private WallpaperItem? ExtractMetadata(string pkgPath, CancellationToken cancellationToken)
     {
         try
         {
             var fileInfo = new FileInfo(pkgPath);
             if (!fileInfo.Exists)
+            {
+                _logger.LogWarning("PKG 文件不存在: {Path}", pkgPath);
                 return null;
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            // 使用 RePKG 读取 PKG
-            var reader = new PackageReader { ReadEntryBytes = false };
+            // project.json 和 preview.jpg 是与 PKG 同目录的外部文件（Wallpaper Engine 结构）
+            var pkgDir = fileInfo.DirectoryName!;
+            var projectJsonPath = Path.Combine(pkgDir, "project.json");
 
-            Core.Package.Package package;
-            using (var stream = File.OpenRead(pkgPath))
-            using (var binaryReader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
+            ProjectInfo? projectInfo = null;
+            byte[]? previewBytes = null;
+
+            // 读取 project.json（外部文件）
+            if (File.Exists(projectJsonPath))
             {
-                package = reader.ReadFrom(binaryReader);
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // 手动读取需要的条目数据
-                foreach (var entry in package.Entries)
+                try
                 {
-                    if (entry.FullPath.EndsWith("project.json", StringComparison.OrdinalIgnoreCase) ||
-                        entry.FullPath.EndsWith("preview.jpg", StringComparison.OrdinalIgnoreCase))
+                    var json = File.ReadAllText(projectJsonPath, Encoding.UTF8);
+                    projectInfo = JsonSerializer.Deserialize<ProjectInfo>(json);
+                    _logger.LogDebug("读取 project.json: {Path}", projectJsonPath);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "project.json 解析失败: {Path}", projectJsonPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "project.json 读取失败: {Path}", projectJsonPath);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("未找到 project.json: {Path}", projectJsonPath);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // 读取 preview.jpg（路径来自 project.json 的 preview 字段）
+            if (!string.IsNullOrEmpty(projectInfo?.Preview))
+            {
+                var previewPath = Path.Combine(pkgDir, projectInfo.Preview);
+                if (File.Exists(previewPath))
+                {
+                    try
                     {
-                        stream.Seek(entry.Offset + package.HeaderSize, SeekOrigin.Begin);
-                        entry.Bytes = binaryReader.ReadBytes(entry.Length);
+                        previewBytes = File.ReadAllBytes(previewPath);
+                        _logger.LogDebug("读取预览图: {Path}", previewPath);
                     }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "预览图读取失败: {Path}", previewPath);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("未找到预览图: {Path}", previewPath);
                 }
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // 提取 project.json
-            var projectEntry = package.Entries.FirstOrDefault(
-                e => e.FullPath.EndsWith("project.json", StringComparison.OrdinalIgnoreCase));
-
-            ProjectInfo? projectInfo = null;
-            if (projectEntry?.Bytes != null)
-            {
-                var json = Encoding.UTF8.GetString(projectEntry.Bytes);
-                projectInfo = JsonSerializer.Deserialize<ProjectInfo>(json);
-            }
-
-            // 提取 preview.jpg
-            var previewEntry = package.Entries.FirstOrDefault(
-                e => e.FullPath.EndsWith("preview.jpg", StringComparison.OrdinalIgnoreCase));
+            // 从目录名提取 Workshop ID（目录名通常就是 Workshop ID）
+            var workshopId = projectInfo?.WorkshopId ?? Path.GetFileName(pkgDir);
 
             return new WallpaperItem
             {
@@ -78,10 +104,10 @@ public class PkgMetadataService : IPkgMetadataService
                 Type = projectInfo?.Type ?? "unknown",
                 PkgPath = pkgPath,
                 FileSize = fileInfo.Length,
-                WorkshopId = projectInfo?.WorkshopId ?? string.Empty,
+                WorkshopId = workshopId,
                 AuthorSteamId = projectInfo?.AuthorSteamId,
                 Tags = projectInfo?.Tags ?? Array.Empty<string>(),
-                PreviewBytes = previewEntry?.Bytes,
+                PreviewBytes = previewBytes,
                 ScanTime = DateTime.UtcNow
             };
         }
@@ -91,6 +117,8 @@ public class PkgMetadataService : IPkgMetadataService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning(ex, "PKG 读取失败（可能损坏）: {Path}", pkgPath);
+
             // 损坏或无法解析的 PKG 返回失败状态
             return new WallpaperItem
             {

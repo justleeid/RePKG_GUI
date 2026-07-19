@@ -24,6 +24,9 @@ public partial class ExtractDialogViewModel : ObservableObject
     private bool _useNameAsFolder = true;
 
     [ObservableProperty]
+    private bool _singleDirectory;
+
+    [ObservableProperty]
     private bool _convertTexToImage = true;
 
     [ObservableProperty]
@@ -53,6 +56,7 @@ public partial class ExtractDialogViewModel : ObservableObject
         {
             OutputDirectory = OutputDirectory,
             UseNameAsFolder = UseNameAsFolder,
+            SingleDirectory = SingleDirectory,
             ConvertTexToImage = ConvertTexToImage,
             OverwriteExisting = OverwriteExisting,
             CopyProjectFiles = CopyProjectFiles
@@ -61,7 +65,11 @@ public partial class ExtractDialogViewModel : ObservableObject
         // 应用文件过滤
         if (FilterImagesOnly)
         {
-            options.IncludeExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga"];
+            // 如果启用 TEX 转换，也需要包含 .tex 文件
+            if (ConvertTexToImage)
+                options.IncludeExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga", ".tex"];
+            else
+                options.IncludeExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga"];
         }
         else if (FilterModelsOnly)
         {

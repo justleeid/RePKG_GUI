@@ -28,11 +28,6 @@ public partial class MainWindow : System.Windows.Window
                     searchBox?.Focus();
                 });
             };
-
-            vm.DragDropScanRequested += async (path) =>
-            {
-                await vm.ScanDirectoryCommand.ExecuteAsync(path);
-            };
         }
     }
 
@@ -67,7 +62,7 @@ public partial class MainWindow : System.Windows.Window
             {
                 if (DataContext is MainViewModel vm)
                 {
-                    vm.DragDropScanRequested?.Invoke(paths[0]);
+                    _ = vm.ScanDirectoryCommand.ExecuteAsync(paths[0]);
                 }
             }
         }

@@ -44,6 +44,7 @@
         <StackPanel Grid.Row="2" Margin="0,0,0,16">
             <TextBlock Text="基本选项" FontWeight="SemiBold" Margin="0,0,0,8"/>
             <CheckBox Content="使用壁纸名称作为子文件夹" IsChecked="{Binding UseNameAsFolder}" Margin="0,0,0,4"/>
+            <CheckBox Content="所有文件放在同一个目录下（不按壁纸分文件夹）" IsChecked="{Binding SingleDirectory}" Margin="0,0,0,4"/>
             <CheckBox Content="转换 TEX 为图片 (PNG)" IsChecked="{Binding ConvertTexToImage}" Margin="0,0,0,4"/>
             <CheckBox Content="复制项目文件 (project.json, preview.jpg)" IsChecked="{Binding CopyProjectFiles}" Margin="0,0,0,4"/>
             <CheckBox Content="覆盖已存在的文件" IsChecked="{Binding OverwriteExisting}" Margin="0,0,0,0"/>

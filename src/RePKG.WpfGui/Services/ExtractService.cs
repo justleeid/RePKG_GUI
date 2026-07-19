@@ -182,6 +182,11 @@ public class ExtractService : IExtractService
 
     private static string CalculateOutputDirectory(WallpaperItem item, ExtractOptions options)
     {
+        // 单目录模式：所有文件放在同一个目录下
+        if (options.SingleDirectory)
+            return options.OutputDirectory;
+
+        // 不使用壁纸名称作为子文件夹
         if (!options.UseNameAsFolder)
             return options.OutputDirectory;
 
@@ -227,18 +232,30 @@ public class ExtractService : IExtractService
         if (!string.IsNullOrEmpty(dirPath))
             Directory.CreateDirectory(dirPath);
 
+        // 如果是 TEX 文件且启用转换，只输出转换后的图片，不输出原始 TEX
+        if (options.ConvertTexToImage && entry.Type == EntryType.Tex)
+        {
+            ConvertTexToImage(entry.Bytes, filePath, options.OverwriteExisting);
+            return; // 不写入原始 .tex 文件
+        }
+
         // 检查是否已存在
         if (!options.OverwriteExisting && File.Exists(filePath))
             return;
 
-        // 写入文件
-        File.WriteAllBytes(filePath, entry.Bytes);
+        // 流式写入文件（避免大文件内存峰值）
+        WriteBytesStreamed(filePath, entry.Bytes);
+    }
 
-        // 如果是 TEX 文件且启用转换
-        if (options.ConvertTexToImage && entry.Type == EntryType.Tex)
-        {
-            ConvertTexToImage(entry.Bytes, filePath, options.OverwriteExisting);
-        }
+    /// <summary>
+    /// 流式写入字节数组到文件（避免大文件内存峰值）
+    /// </summary>
+    private static void WriteBytesStreamed(string filePath, byte[] bytes)
+    {
+        const int bufferSize = 81920; // 80KB 缓冲区
+        using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
+        using var memoryStream = new MemoryStream(bytes);
+        memoryStream.CopyTo(fileStream, bufferSize);
     }
 
     private static void ConvertTexToImage(byte[] texBytes, string originalPath, bool overwrite)
