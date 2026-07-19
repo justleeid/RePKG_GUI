@@ -22,6 +22,7 @@ publish/
 *.exe
 *.dll
 *.pdb
+*.zip
 output/
 
 # NuGet
