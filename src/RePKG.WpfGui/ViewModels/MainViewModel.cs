@@ -176,12 +176,14 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnCurrentSortFieldChanged(SortField value)
     {
+        ApplySortToAllItems();
         ApplySearchFilter();
     }
 
     partial void OnSortAscendingChanged(bool value)
     {
         OnPropertyChanged(nameof(SortDirectionText));
+        ApplySortToAllItems();
         ApplySearchFilter();
     }
 
@@ -289,6 +291,11 @@ public partial class MainViewModel : ObservableObject
             });
 
             await Task.WhenAll(tasks);
+
+            // 扫描完成后按当前排序字段排序
+            ApplySortToAllItems();
+            ApplySearchFilter();
+
             StatusText = $"扫描完成，共 {WallpaperItems.Count} 个壁纸";
         }
         catch (OperationCanceledException)
@@ -698,6 +705,32 @@ public partial class MainViewModel : ObservableObject
         {
             _isUpdatingFilter = false;
         }
+    }
+
+    /// <summary>
+    /// 对 _allItems 应用排序（扫描完成后调用）
+    /// </summary>
+    private void ApplySortToAllItems()
+    {
+        var sorted = CurrentSortField switch
+        {
+            SortField.Title => SortAscending
+                ? _allItems.OrderBy(i => i.Title, StringComparer.OrdinalIgnoreCase).ToList()
+                : _allItems.OrderByDescending(i => i.Title, StringComparer.OrdinalIgnoreCase).ToList(),
+            SortField.Author => SortAscending
+                ? _allItems.OrderBy(i => i.Author, StringComparer.OrdinalIgnoreCase).ToList()
+                : _allItems.OrderByDescending(i => i.Author, StringComparer.OrdinalIgnoreCase).ToList(),
+            SortField.FileSize => SortAscending
+                ? _allItems.OrderBy(i => i.FileSize).ToList()
+                : _allItems.OrderByDescending(i => i.FileSize).ToList(),
+            SortField.Type => SortAscending
+                ? _allItems.OrderBy(i => i.Type).ToList()
+                : _allItems.OrderByDescending(i => i.Type).ToList(),
+            _ => _allItems.ToList()
+        };
+
+        _allItems.Clear();
+        _allItems.AddRange(sorted);
     }
 
     /// <summary>

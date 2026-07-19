@@ -80,7 +80,8 @@
                        Text="{Binding Author}"
                        FontSize="12"
                        Foreground="#616161"
-                       TextTrimming="CharacterEllipsis"/>
+                       TextTrimming="CharacterEllipsis"
+                       Visibility="{Binding HasAuthor, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
             <!-- 大小 -->
             <TextBlock Grid.Row="3"

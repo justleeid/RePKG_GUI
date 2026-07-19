@@ -82,13 +82,6 @@
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                      Margin="8,0"/>
 
-            <Separator Margin="8,0"/>
-
-            <TextBlock VerticalAlignment="Center" Margin="8,0">
-                <Run Text="Steam: "/>
-                <Run Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}" FontWeight="SemiBold"/>
-            </TextBlock>
-
             <Button Content="⏹ 取消" Command="{Binding CancelScanCommand}" Padding="12,6" Margin="16,0,0,0"
                     Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
         </StackPanel>
@@ -172,6 +165,13 @@
                     <Run Text="已选 "/>
                     <Run Text="{Binding SelectedCount}"/>
                     <Run Text=" 个"/>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem MaxWidth="300" ToolTip="{Binding DetectedWorkshopPath}">
+                <TextBlock TextTrimming="CharacterEllipsis">
+                    <Run Text="Steam: "/>
+                    <Run Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}" FontWeight="SemiBold"/>
                 </TextBlock>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
