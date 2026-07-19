@@ -1,0 +1,16 @@
+RePKG GUI v0.1.0 - 使用说明
+============================
+
+【使用方法】
+1. 解压 zip 文件
+2. 双击 RePKG.Gui.exe 运行
+
+【如果打不开】
+请安装 Visual C++ 运行时：
+https://aka.ms/vs/17/release/vc_redist.x64.exe
+
+安装后重新运行 RePKG.Gui.exe 即可。
+
+【系统要求】
+- Windows 10 1809+ / Windows 11（64-bit）
+- 已安装 Visual C++ 运行时（如上）
