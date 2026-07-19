@@ -4,6 +4,11 @@
              xmlns:converters="clr-namespace:RePKG.WpfGui.Converters">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- 引入全局样式 -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
             <!-- 转换器 -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         </ResourceDictionary>

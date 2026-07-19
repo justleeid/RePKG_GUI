@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:RePKG.WpfGui.Converters"
-             Width="220" Height="280"
+             Width="200" Height="240"
              MouseLeftButtonDown="OnMouseLeftButtonDown"
              Cursor="Hand">
 
@@ -11,26 +11,24 @@
     </UserControl.Resources>
 
     <Border x:Name="CardBorder"
-            BorderThickness="2"
+            BorderThickness="1"
             CornerRadius="8"
-            Margin="4"
-            Padding="12"
+            Margin="6"
+            Padding="0"
             BorderBrush="#E0E0E0"
             Background="White">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="8" Opacity="0.1" ShadowDepth="2"/>
+            <DropShadowEffect BlurRadius="10" Opacity="0.08" ShadowDepth="2"/>
         </Border.Effect>
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="200"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="160"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 缩略图 -->
-            <Border Grid.Row="0" CornerRadius="4" Background="#F0F0F0" ClipToBounds="True">
+            <!-- 缩略图区域 -->
+            <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="#F5F5F5" ClipToBounds="True">
                 <Grid>
                     <!-- 缩略图图片 -->
                     <Image Source="{Binding PreviewImage}"
@@ -42,52 +40,74 @@
                     <StackPanel VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
                                 Visibility="{Binding IsLoadingPreview, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="⏳" FontSize="32" HorizontalAlignment="Center"/>
-                        <TextBlock Text="加载中..." FontSize="12" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="⏳" FontSize="28" HorizontalAlignment="Center"/>
+                        <TextBlock Text="加载中" FontSize="11" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- 无预览图占位符 -->
+                    <StackPanel VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Visibility="{Binding HasNoPreview, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="🖼️" FontSize="36" HorizontalAlignment="Center" Opacity="0.3"/>
                     </StackPanel>
 
                     <!-- 类型图标 -->
                     <Border HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
-                            Background="#99000000"
-                            CornerRadius="4"
-                            Margin="4"
-                            Padding="4">
-                        <TextBlock Text="{Binding TypeIcon}" FontSize="14" Foreground="White"/>
+                            Background="#CC000000"
+                            CornerRadius="4,4,0,0"
+                            Padding="8,4">
+                        <TextBlock Text="{Binding TypeIcon}" FontSize="12" Foreground="White"/>
                     </Border>
 
                     <!-- 选中勾选标记 -->
                     <Border HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Margin="4"
+                            Margin="8"
                             Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="☑" FontSize="24" Foreground="#0078D4"/>
+                        <Border Background="#0078D4" CornerRadius="12" Width="24" Height="24">
+                            <TextBlock Text="✓" FontSize="14" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Border>
+
+                    <!-- 扫描失败标记 -->
+                    <Border HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Margin="8"
+                            Visibility="{Binding IsScanFailed, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Border Background="#D13438" CornerRadius="12" Padding="8,2">
+                            <TextBlock Text="失败" FontSize="10" Foreground="White"/>
+                        </Border>
                     </Border>
                 </Grid>
             </Border>
 
-            <!-- 标题 -->
-            <TextBlock Grid.Row="1"
-                       Text="{Binding Title}"
-                       FontSize="14"
-                       FontWeight="SemiBold"
-                       Foreground="#1A1A1A"
-                       TextTrimming="CharacterEllipsis"
-                       Margin="0,8,0,2"/>
+            <!-- 信息区域 -->
+            <Border Grid.Row="1" Padding="10,8">
+                <StackPanel>
+                    <!-- 标题 -->
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="#1A1A1A"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,0,0,2"/>
 
-            <!-- 作者 -->
-            <TextBlock Grid.Row="2"
-                       Text="{Binding Author}"
-                       FontSize="12"
-                       Foreground="#616161"
-                       TextTrimming="CharacterEllipsis"
-                       Visibility="{Binding HasAuthor, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!-- 作者（可选显示） -->
+                    <TextBlock Text="{Binding Author}"
+                               FontSize="11"
+                               Foreground="#616161"
+                               TextTrimming="CharacterEllipsis"
+                               Visibility="{Binding HasAuthor, Converter={StaticResource BoolToVisibilityConverter}}"
+                               Margin="0,0,0,2"/>
 
-            <!-- 大小 -->
-            <TextBlock Grid.Row="3"
-                       Text="{Binding FileSizeDisplay}"
-                       FontSize="12"
-                       Foreground="#9E9E9E"/>
+                    <!-- 大小 -->
+                    <TextBlock Text="{Binding FileSizeDisplay}"
+                               FontSize="11"
+                               Foreground="#9E9E9E"/>
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </UserControl>

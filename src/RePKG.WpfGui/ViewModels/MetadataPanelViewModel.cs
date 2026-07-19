@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -57,6 +59,15 @@ public partial class MetadataPanelViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasAuthorSteamId;
 
+    [ObservableProperty]
+    private bool _hasAuthor;
+
+    [ObservableProperty]
+    private bool _hasTags;
+
+    [ObservableProperty]
+    private List<string> _tags = [];
+
     /// <summary>
     /// 更新显示的壁纸项
     /// </summary>
@@ -88,6 +99,14 @@ public partial class MetadataPanelViewModel : ObservableObject
         AuthorSteamUrl = HasAuthorSteamId
             ? $"https://steamcommunity.com/profiles/{item.AuthorSteamId}"
             : string.Empty;
+
+        // 作者显示
+        HasAuthor = item.HasAuthor;
+
+        // 标签
+        Tags = item.Tags?.Length > 0 ? new List<string>(item.Tags) : [];
+        HasTags = Tags.Count > 0;
+
         IsVisible = true;
     }
 

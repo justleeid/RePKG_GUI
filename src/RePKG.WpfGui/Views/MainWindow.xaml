@@ -5,13 +5,18 @@
         xmlns:controls="clr-namespace:RePKG.WpfGui.Views.Controls"
         xmlns:views="clr-namespace:RePKG.WpfGui.Views"
         Title="RePKG GUI - Wallpaper Engine 解包工具"
-        Width="1200" Height="800"
-        MinWidth="800" MinHeight="600"
+        Width="1280" Height="800"
+        MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
+        Background="#F3F3F3"
         AllowDrop="True"
         DragEnter="OnDragEnter"
         DragLeave="OnDragLeave"
         Drop="OnDrop">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
 
     <Window.InputBindings>
         <KeyBinding Key="A" Modifiers="Control" Command="{Binding SelectAllCommand}"/>
@@ -24,174 +29,230 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 菜单栏 -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="文件(_F)">
-                <MenuItem Header="打开目录(_O)" Command="{Binding OpenDirectoryCommand}"/>
-                <Separator/>
-                <MenuItem Header="退出(_X)" Click="OnExitClick"/>
-            </MenuItem>
-            <MenuItem Header="编辑(_E)">
-                <MenuItem Header="全选(_A)" Command="{Binding SelectAllCommand}" InputGestureText="Ctrl+A"/>
-                <MenuItem Header="取消全选(_D)" Command="{Binding DeselectAllCommand}" InputGestureText="Ctrl+D"/>
-            </MenuItem>
-            <MenuItem Header="视图(_V)">
-                <MenuItem Header="切换视图模式" Command="{Binding ToggleViewModeCommand}"/>
-                <Separator/>
-                <MenuItem Header="刷新(_R)" Command="{Binding RefreshCommand}"/>
-            </MenuItem>
-            <MenuItem Header="帮助(_H)">
-                <MenuItem Header="关于(_A)" Click="OnAboutClick"/>
-            </MenuItem>
-        </Menu>
+        <!-- ========== 工具栏 ========== -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="12,8">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource PrimaryButton}" Content="📂 打开目录"
+                        Command="{Binding OpenDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                <Button Style="{StaticResource ModernButton}" Content="🔄 扫描检测目录"
+                        Command="{Binding ScanDetectedDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                <Button Style="{StaticResource ModernButton}" Content="{Binding ViewModeToggleText}"
+                        Command="{Binding ToggleViewModeCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                <Separator Margin="8,0" VerticalAlignment="Center" Height="20"/>
+                <Button Style="{StaticResource PrimaryButton}" Content="📦 解包选中"
+                        Command="{Binding ExtractSelectedCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                <Button Style="{StaticResource IconButton}" Content="⏹ 取消"
+                        Command="{Binding CancelScanCommand}"
+                        Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </StackPanel>
+        </Border>
 
-        <!-- 工具栏 -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="8,4">
-            <Button Content="📁 打开目录" Command="{Binding OpenDirectoryCommand}" Padding="12,6" Margin="0,0,8,0"/>
-            <Button Content="🔄 扫描检测目录" Command="{Binding ScanDetectedDirectoryCommand}" Padding="12,6" Margin="0,0,8,0"/>
-            <Button Content="{Binding ViewModeToggleText}" Command="{Binding ToggleViewModeCommand}" Padding="12,6" Margin="0,0,8,0"/>
+        <!-- ========== 主内容区 ========== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <Separator Margin="8,0"/>
+            <!-- 左侧导航 -->
+            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-            <Button Content="📦 解包选中" Command="{Binding ExtractSelectedCommand}" Padding="12,6" Margin="0,0,8,0"
-                    Background="#0078D4" Foreground="White"/>
+                    <!-- 分类标题 -->
+                    <TextBlock Grid.Row="0" Text="分类筛选" FontSize="12" Foreground="#9E9E9E"
+                               Margin="16,16,16,8"/>
 
-            <Separator Margin="8,0"/>
+                    <!-- 分类列表 -->
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Categories}"
+                             SelectedItem="{Binding SelectedCategory}"
+                             Style="{x:Null}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ItemContainerStyle="{StaticResource NavigationItem}"
+                             Margin="8,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding Name}"/>
+                                    <TextBlock Text="{Binding Count, StringFormat=' ({0})'}"
+                                               Foreground="#9E9E9E" Margin="4,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-            <!-- 排序 -->
-            <ComboBox SelectedValue="{Binding CurrentSortField}" SelectedValuePath="Tag" Width="100" Margin="0,0,4,0">
-                <ComboBoxItem Content="标题" Tag="Title"/>
-                <ComboBoxItem Content="作者" Tag="Author"/>
-                <ComboBoxItem Content="大小" Tag="FileSize"/>
-                <ComboBoxItem Content="类型" Tag="Type"/>
-            </ComboBox>
-            <Button Content="{Binding SortDirectionText}" Command="{Binding ToggleSortDirectionCommand}"
-                    Padding="8,6" Margin="0,0,8,0"/>
+                    <!-- 路径显示 -->
+                    <Border Grid.Row="2" Background="#F5F5F5" Padding="12" Margin="8,8"
+                            CornerRadius="4" ToolTip="{Binding DetectedWorkshopPath}">
+                        <StackPanel>
+                            <TextBlock Text="Steam 路径" FontSize="11" Foreground="#9E9E9E" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}"
+                                       FontSize="12" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
 
-            <Separator Margin="8,0"/>
+            <!-- 右侧内容区 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <!-- 搜索框 -->
-            <TextBox x:Name="SearchBox" Width="200" VerticalAlignment="Center"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="8,0"/>
+                <!-- 搜索和状态栏 -->
+                <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0"
+                        BorderThickness="0,0,0,1" Padding="16,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-            <Button Content="⏹ 取消" Command="{Binding CancelScanCommand}" Padding="12,6" Margin="16,0,0,0"
-                    Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-        </StackPanel>
+                        <!-- 搜索框 -->
+                        <TextBox Grid.Column="0" Style="{StaticResource SearchBox}"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 MaxWidth="300" HorizontalAlignment="Left"
+                                 x:Name="SearchBox"/>
 
-        <!-- 主内容区 -->
-        <Grid Grid.Row="2" Margin="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+                        <!-- 排序和统计 -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TotalCount, StringFormat='共 {0} 个'}"
+                                       Foreground="#616161" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                            <TextBlock Text="{Binding SelectedCount, StringFormat='已选 {0} 个'}"
+                                       Foreground="#0078D4" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Margin="0,0,16,0"/>
+                            <Button Style="{StaticResource IconButton}" Content="↑↓"
+                                    Command="{Binding ToggleSortDirectionCommand}"
+                                    ToolTip="{Binding SortDirectionText}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-            <!-- 网格视图（简单可靠的 ScrollViewer + WrapPanel） -->
-            <ScrollViewer Grid.Row="0"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled"
-                          Visibility="{Binding IsGridView, Converter={StaticResource BoolToVisibilityConverter}}">
-                <ItemsControl ItemsSource="{Binding WallpaperItems}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:WallpaperItemViewModel}">
-                            <controls:WallpaperCard/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                <!-- 壁纸列表区域 -->
+                <Grid Grid.Row="1" Margin="16,8">
 
-            <!-- 列表视图 -->
-            <DataGrid Grid.Row="0"
-                      ItemsSource="{Binding WallpaperItems}"
-                      SelectedItem="{Binding SelectedItem}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      SelectionMode="Single"
-                      GridLinesVisibility="Horizontal"
-                      AlternatingRowBackground="#F9F9F9"
-                      Visibility="{Binding IsListView, Converter={StaticResource BoolToVisibilityConverter}}">
-                <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40"/>
-                    <DataGridTextColumn Header="类型" Binding="{Binding TypeIcon}" Width="50"/>
-                    <DataGridTextColumn Header="标题" Binding="{Binding Title}" Width="*"/>
-                    <DataGridTextColumn Header="作者" Binding="{Binding Author}" Width="150"/>
-                    <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="100"/>
-                    <DataGridTextColumn Header="大小" Binding="{Binding FileSizeDisplay}" Width="100"/>
-                    <DataGridTextColumn Header="Workshop ID" Binding="{Binding WorkshopId}" Width="120"/>
-                </DataGrid.Columns>
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Height" Value="32"/>
-                    </Style>
-                </DataGrid.RowStyle>
-            </DataGrid>
+                    <!-- 网格视图 -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Visibility="{Binding IsGridView, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl ItemsSource="{Binding WallpaperItems}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:WallpaperItemViewModel}">
+                                    <controls:WallpaperCard/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
 
-            <!-- 详情面板 -->
-            <views:MetadataPanel Grid.Row="1"
-                                 DataContext="{Binding MetadataPanel}"
-                                 Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!-- 列表视图 -->
+                    <DataGrid ItemsSource="{Binding WallpaperItems}"
+                              SelectedItem="{Binding SelectedItem}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="None"
+                              BorderThickness="0"
+                              Background="Transparent"
+                              Visibility="{Binding IsListView, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Padding" Value="8,6"/>
+                                <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Padding" Value="8,4"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Padding="{TemplateBinding Padding}"
+                                                    Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#100078D4"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Height" Value="48"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#080078D4"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#05000000"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding TypeIcon}" Width="50"/>
+                            <DataGridTextColumn Header="标题" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="作者" Binding="{Binding Author}" Width="120"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding FileSizeDisplay}" Width="80"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding WorkshopId}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Grid>
         </Grid>
 
-        <!-- 状态栏 -->
-        <StatusBar Grid.Row="3">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusText}"/>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock>
-                    <Run Text="共 "/>
-                    <Run Text="{Binding TotalCount}"/>
-                    <Run Text=" 个壁纸"/>
-                </TextBlock>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem>
-                <TextBlock>
-                    <Run Text="已选 "/>
-                    <Run Text="{Binding SelectedCount}"/>
-                    <Run Text=" 个"/>
-                </TextBlock>
-            </StatusBarItem>
-            <Separator/>
-            <StatusBarItem MaxWidth="300" ToolTip="{Binding DetectedWorkshopPath}">
-                <TextBlock TextTrimming="CharacterEllipsis">
-                    <Run Text="Steam: "/>
-                    <Run Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}" FontWeight="SemiBold"/>
-                </TextBlock>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <ProgressBar Width="200" Height="16"
-                             IsIndeterminate="{Binding IsScanning}"
-                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-            </StatusBarItem>
-        </StatusBar>
+        <!-- ========== 详情面板 ========== -->
+        <views:MetadataPanel Grid.Row="2"
+                             DataContext="{Binding MetadataPanel}"
+                             Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-        <!-- 进度指示器 -->
+        <!-- ========== 状态栏 ========== -->
+        <Border Grid.Row="3" Background="White" BorderBrush="#E0E0E0"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#616161"/>
+        </Border>
+
+        <!-- ========== 进度指示器 ========== -->
         <Border Grid.Row="4" Background="#0078D4" Padding="8"
                 Visibility="{Binding IsExtracting, Converter={StaticResource BoolToVisibilityConverter}}">
             <TextBlock Text="正在解包..." Foreground="White" HorizontalAlignment="Center"/>
         </Border>
 
-        <!-- 拖拽导入覆盖层 -->
+        <!-- ========== 拖拽覆盖层 ========== -->
         <Border x:Name="DragOverlay" Grid.RowSpan="5"
-                Background="#800078D4" Visibility="Collapsed">
+                Background="#CC1B1B1B" Visibility="Collapsed">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="📁" FontSize="64" HorizontalAlignment="Center"/>
-                <TextBlock Text="释放以扫描此目录" FontSize="24" FontWeight="SemiBold"
+                <TextBlock Text="📂" FontSize="64" HorizontalAlignment="Center"/>
+                <TextBlock Text="释放以扫描此目录" FontSize="20" FontWeight="SemiBold"
                            Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0"/>
             </StackPanel>
         </Border>

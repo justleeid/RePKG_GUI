@@ -102,4 +102,9 @@ public partial class WallpaperItemViewModel : ObservableObject
     public bool HasAuthor => !string.IsNullOrWhiteSpace(Author) &&
                              !Author.Equals("Unknown", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// 是否没有预览图（用于显示占位符）
+    /// </summary>
+    public bool HasNoPreview => PreviewImage == null && !IsLoadingPreview && !IsScanFailed;
+
 }

@@ -42,6 +42,24 @@ public enum SortField
 }
 
 /// <summary>
+/// 分类项
+/// </summary>
+public partial class CategoryItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _icon = string.Empty;
+
+    [ObservableProperty]
+    private string _name = string.Empty;
+
+    [ObservableProperty]
+    private string _filterKey = string.Empty;
+
+    [ObservableProperty]
+    private int _count;
+}
+
+/// <summary>
 /// 主窗口 ViewModel
 /// </summary>
 public partial class MainViewModel : ObservableObject
@@ -128,6 +146,40 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _sortAscending = true;
 
+    [ObservableProperty]
+    private string? _selectedType = "全部类型";
+
+    [ObservableProperty]
+    private string? _selectedTag = "全部标签";
+
+    [ObservableProperty]
+    private bool _showSelectedOnly;
+
+    [ObservableProperty]
+    private CategoryItem? _selectedCategory;
+
+    /// <summary>
+    /// 分类列表（左侧导航）
+    /// </summary>
+    public ObservableCollection<CategoryItem> Categories { get; } =
+    [
+        new() { Icon = "📁", Name = "全部", FilterKey = "all" },
+        new() { Icon = "🎬", Name = "Scene", FilterKey = "scene" },
+        new() { Icon = "🌍", Name = "Web", FilterKey = "web" },
+        new() { Icon = "📹", Name = "Video", FilterKey = "video" },
+        new() { Icon = "📱", Name = "Application", FilterKey = "application" }
+    ];
+
+    /// <summary>
+    /// 可用的壁纸类型列表（扫描后自动填充）
+    /// </summary>
+    public ObservableCollection<string> AvailableTypes { get; } = ["全部类型"];
+
+    /// <summary>
+    /// 可用的标签列表（扫描后自动填充）
+    /// </summary>
+    public ObservableCollection<string> AvailableTags { get; } = ["全部标签"];
+
     // ── 计算属性 ──
 
     /// <summary>
@@ -174,6 +226,11 @@ public partial class MainViewModel : ObservableObject
         _metadataPanelViewModel.UpdateItem(value);
     }
 
+    partial void OnSelectedCategoryChanged(CategoryItem? value)
+    {
+        ApplySearchFilter();
+    }
+
     partial void OnCurrentSortFieldChanged(SortField value)
     {
         ApplySortToAllItems();
@@ -184,6 +241,21 @@ public partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SortDirectionText));
         ApplySortToAllItems();
+        ApplySearchFilter();
+    }
+
+    partial void OnSelectedTypeChanged(string? value)
+    {
+        ApplySearchFilter();
+    }
+
+    partial void OnSelectedTagChanged(string? value)
+    {
+        ApplySearchFilter();
+    }
+
+    partial void OnShowSelectedOnlyChanged(bool value)
+    {
         ApplySearchFilter();
     }
 
@@ -295,6 +367,9 @@ public partial class MainViewModel : ObservableObject
             // 扫描完成后按当前排序字段排序
             ApplySortToAllItems();
             ApplySearchFilter();
+
+            // 更新分类计数
+            UpdateCategoryCounts();
 
             StatusText = $"扫描完成，共 {WallpaperItems.Count} 个壁纸";
         }
@@ -409,6 +484,46 @@ public partial class MainViewModel : ObservableObject
             item.IsSelected = false;
         }
         UpdateSelectedCount();
+    }
+
+    /// <summary>
+    /// 按类型全选（选中当前筛选结果中所有项）
+    /// </summary>
+    [RelayCommand]
+    private void SelectByType(string? type)
+    {
+        if (string.IsNullOrEmpty(type)) return;
+        foreach (var item in WallpaperItems.Where(i => i.Type == type))
+        {
+            item.IsSelected = true;
+        }
+        UpdateSelectedCount();
+    }
+
+    /// <summary>
+    /// 按标签全选（选中包含指定标签的所有项）
+    /// </summary>
+    [RelayCommand]
+    private void SelectByTag(string? tag)
+    {
+        if (string.IsNullOrEmpty(tag)) return;
+        foreach (var item in WallpaperItems.Where(i => i.Tags.Any(t => t == tag)))
+        {
+            item.IsSelected = true;
+        }
+        UpdateSelectedCount();
+    }
+
+    /// <summary>
+    /// 清除所有筛选条件
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        SearchText = string.Empty;
+        SelectedType = "全部类型";
+        SelectedTag = "全部标签";
+        ShowSelectedOnly = false;
     }
 
     /// <summary>
@@ -660,14 +775,29 @@ public partial class MainViewModel : ObservableObject
         {
             // 过滤
             IEnumerable<WallpaperItemViewModel> filtered = _allItems;
+
+            // 左侧导航分类筛选
+            if (SelectedCategory != null && SelectedCategory.FilterKey != "all")
+            {
+                filtered = filtered.Where(i =>
+                    string.Equals(i.Type, SelectedCategory.FilterKey, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 搜索文本过滤
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 var search = SearchText.ToLowerInvariant();
-                filtered = _allItems.Where(i =>
+                filtered = filtered.Where(i =>
                     i.Title.ToLowerInvariant().Contains(search) ||
                     i.Author.ToLowerInvariant().Contains(search) ||
                     i.Tags.Any(t => t.ToLowerInvariant().Contains(search)) ||
                     i.Type.ToLowerInvariant().Contains(search));
+            }
+
+            // 仅显示已选中项
+            if (ShowSelectedOnly)
+            {
+                filtered = filtered.Where(i => i.IsSelected);
             }
 
             // 排序
@@ -730,10 +860,80 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 更新分类计数
+    /// </summary>
+    private void UpdateCategoryCounts()
+    {
+        var typeCounts = _allItems
+            .GroupBy(i => i.Type, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var category in Categories)
+        {
+            if (category.FilterKey == "all")
+            {
+                category.Count = _allItems.Count;
+            }
+            else if (typeCounts.TryGetValue(category.FilterKey, out var count))
+            {
+                category.Count = count;
+            }
+            else
+            {
+                category.Count = 0;
+            }
+        }
+    }
+
+    /// <summary>
     /// 更新选中计数
     /// </summary>
     private void UpdateSelectedCount()
     {
         SelectedCount = WallpaperItems.Count(x => x.IsSelected);
+    }
+
+    /// <summary>
+    /// 类型中文名映射
+    /// </summary>
+    private static readonly Dictionary<string, string> TypeDisplayNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["scene"] = "scene（场景）",
+        ["video"] = "video（视频）",
+        ["web"] = "web（网页）",
+        ["application"] = "application（应用）",
+    };
+
+    /// <summary>
+    /// 扫描完成后更新筛选选项（类型列表、标签列表）
+    /// </summary>
+    private void UpdateFilterOptions()
+    {
+        // 收集所有出现过的类型（忽略大小写去重，显示中文名）
+        var types = _allItems
+            .Select(i => i.Type?.ToLowerInvariant())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+
+        AvailableTypes.Clear();
+        AvailableTypes.Add("全部类型");
+        foreach (var type in types)
+            AvailableTypes.Add(TypeDisplayNames.TryGetValue(type!, out var display) ? display : type!);
+
+        // 收集所有出现过的标签（忽略大小写去重，显示为小写）
+        var tags = _allItems
+            .SelectMany(i => i.Tags)
+            .Where(t => !string.IsNullOrEmpty(t))
+            .Select(t => t.ToLowerInvariant())
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+
+        AvailableTags.Clear();
+        AvailableTags.Add("全部标签");
+        foreach (var tag in tags)
+            AvailableTags.Add(tag!);
     }
 }
