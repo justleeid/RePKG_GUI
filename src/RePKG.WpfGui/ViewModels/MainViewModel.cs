@@ -329,10 +329,6 @@ public partial class MainViewModel : ObservableObject
     public event Action? SearchBoxFocusRequested;
 
     /// <summary>
-    /// 拖拽导入扫描请求事件（由 View 订阅）
-    /// </summary>
-
-    /// <summary>
     /// 取消扫描
     /// </summary>
     [RelayCommand]
