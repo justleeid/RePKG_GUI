@@ -58,6 +58,11 @@ public class WallpaperItem
     public DateTime ScanTime { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// 文件最后修改时间（通常反映下载时间）
+    /// </summary>
+    public DateTime FileLastWriteTime { get; set; }
+
+    /// <summary>
     /// 是否已解包
     /// </summary>
     public bool IsExtracted { get; set; }

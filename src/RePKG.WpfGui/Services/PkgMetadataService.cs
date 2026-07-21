@@ -108,7 +108,8 @@ public class PkgMetadataService : IPkgMetadataService
                 AuthorSteamId = projectInfo?.AuthorSteamId,
                 Tags = projectInfo?.Tags ?? Array.Empty<string>(),
                 PreviewBytes = previewBytes,
-                ScanTime = DateTime.UtcNow
+                ScanTime = DateTime.UtcNow,
+                FileLastWriteTime = fileInfo.LastWriteTime
             };
         }
         catch (OperationCanceledException)

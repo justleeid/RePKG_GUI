@@ -124,7 +124,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- 搜索和状态栏 -->
+                <!-- 搜索和排序栏 -->
                 <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1" Padding="16,10">
                     <Grid>
@@ -139,9 +139,20 @@
                                  MaxWidth="300" HorizontalAlignment="Left"
                                  x:Name="SearchBox"/>
 
-                        <!-- 排序 -->
+                        <!-- 排序按钮 -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{StaticResource IconButton}" Content="↑↓"
+                            <TextBlock Text="排序:" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Style="{StaticResource IconButton}" Content="名称"
+                                    Command="{Binding SetSortFieldCommand}" CommandParameter="Title"
+                                    Opacity="{Binding SortFieldOpacity_Title}"/>
+                            <Button Style="{StaticResource IconButton}" Content="大小"
+                                    Command="{Binding SetSortFieldCommand}" CommandParameter="FileSize"
+                                    Opacity="{Binding SortFieldOpacity_FileSize}"/>
+                            <Button Style="{StaticResource IconButton}" Content="时间"
+                                    Command="{Binding SetSortFieldCommand}" CommandParameter="Date"
+                                    Opacity="{Binding SortFieldOpacity_Date}"/>
+                            <Button Style="{StaticResource IconButton}" Content="{Binding SortDirectionIcon}"
                                     Command="{Binding ToggleSortDirectionCommand}"
                                     ToolTip="{Binding SortDirectionText}"/>
                         </StackPanel>
@@ -171,17 +182,16 @@
 
                     <!-- 列表视图 -->
                     <DataGrid ItemsSource="{Binding WallpaperItems}"
-                              SelectedItem="{Binding SelectedItem}"
+                              SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                               AutoGenerateColumns="False"
-                              IsReadOnly="True"
                               CanUserAddRows="False"
                               CanUserDeleteRows="False"
-                              SelectionMode="Extended"
+                              SelectionMode="Single"
                               SelectionUnit="FullRow"
+                              IsSynchronizedWithCurrentItem="True"
                               GridLinesVisibility="None"
                               BorderThickness="0"
                               Background="Transparent"
-                              SelectionChanged="OnDataGridSelectionChanged"
                               Visibility="{Binding IsListView, Converter={StaticResource BoolToVisibilityConverter}}">
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
@@ -228,12 +238,20 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40"/>
-                            <DataGridTextColumn Header="类型" Binding="{Binding TypeIcon}" Width="50"/>
-                            <DataGridTextColumn Header="标题" Binding="{Binding Title}" Width="*"/>
-                            <DataGridTextColumn Header="作者" Binding="{Binding Author}" Width="120"/>
-                            <DataGridTextColumn Header="大小" Binding="{Binding FileSizeDisplay}" Width="80"/>
-                            <DataGridTextColumn Header="ID" Binding="{Binding WorkshopId}" Width="100"/>
+                            <DataGridTemplateColumn Header="" Width="40" IsReadOnly="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Padding="4"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="类型" Binding="{Binding TypeIcon}" Width="50" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="标题" Binding="{Binding Title}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="作者" Binding="{Binding Author}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding FileSizeDisplay}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding WorkshopId}" Width="100" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

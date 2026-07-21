@@ -38,7 +38,8 @@ public enum SortField
     Title,
     Author,
     FileSize,
-    Type
+    Type,
+    Date
 }
 
 /// <summary>
@@ -231,9 +232,19 @@ public partial class MainViewModel : ObservableObject
     public string SortDirectionText => SortAscending ? "↑ 升序" : "↓ 降序";
 
     /// <summary>
+    /// 排序方向图标
+    /// </summary>
+    public string SortDirectionIcon => SortAscending ? "↑" : "↓";
+
+    /// <summary>
     /// 详情面板 ViewModel
     /// </summary>
     public MetadataPanelViewModel MetadataPanel => _metadataPanelViewModel;
+
+    // 排序字段透明度（当前选中的高亮）
+    public double SortFieldOpacity_Title => CurrentSortField == SortField.Title ? 1.0 : 0.5;
+    public double SortFieldOpacity_FileSize => CurrentSortField == SortField.FileSize ? 1.0 : 0.5;
+    public double SortFieldOpacity_Date => CurrentSortField == SortField.Date ? 1.0 : 0.5;
 
     // ── 属性变更处理 ──
 
@@ -242,6 +253,10 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsGridView));
         OnPropertyChanged(nameof(IsListView));
         OnPropertyChanged(nameof(ViewModeToggleText));
+
+        // 切换视图时清除选中状态，隐藏详情面板
+        SelectedItem = null;
+        _metadataPanelViewModel.IsVisible = false;
     }
 
     partial void OnSearchTextChanged(string value)
@@ -261,6 +276,11 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnCurrentSortFieldChanged(SortField value)
     {
+        // 更新排序按钮透明度
+        OnPropertyChanged(nameof(SortFieldOpacity_Title));
+        OnPropertyChanged(nameof(SortFieldOpacity_FileSize));
+        OnPropertyChanged(nameof(SortFieldOpacity_Date));
+
         ApplySortToAllItems();
         ApplySearchFilter();
     }
@@ -268,6 +288,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnSortAscendingChanged(bool value)
     {
         OnPropertyChanged(nameof(SortDirectionText));
+        OnPropertyChanged(nameof(SortDirectionIcon));
         ApplySortToAllItems();
         ApplySearchFilter();
     }
@@ -889,6 +910,9 @@ public partial class MainViewModel : ObservableObject
                 SortField.Type => SortAscending
                     ? filtered.OrderBy(i => i.Type)
                     : filtered.OrderByDescending(i => i.Type),
+                SortField.Date => SortAscending
+                    ? filtered.OrderBy(i => i.FileLastWriteTime)
+                    : filtered.OrderByDescending(i => i.FileLastWriteTime),
                 _ => filtered
             };
 
@@ -926,6 +950,9 @@ public partial class MainViewModel : ObservableObject
             SortField.Type => SortAscending
                 ? _allItems.OrderBy(i => i.Type).ToList()
                 : _allItems.OrderByDescending(i => i.Type).ToList(),
+            SortField.Date => SortAscending
+                ? _allItems.OrderBy(i => i.FileLastWriteTime).ToList()
+                : _allItems.OrderByDescending(i => i.FileLastWriteTime).ToList(),
             _ => _allItems.ToList()
         };
 

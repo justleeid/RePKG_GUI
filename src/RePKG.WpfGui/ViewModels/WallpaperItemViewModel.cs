@@ -25,6 +25,7 @@ public partial class WallpaperItemViewModel : ObservableObject
         _typeIcon = model.TypeIcon;
         _isScanFailed = model.IsScanFailed;
         _errorMessage = model.ErrorMessage;
+        _fileLastWriteTime = model.FileLastWriteTime;
         AuthorSteamId = model.AuthorSteamId;
     }
 
@@ -38,6 +39,9 @@ public partial class WallpaperItemViewModel : ObservableObject
 
     [ObservableProperty]
     private string _type;
+
+    [ObservableProperty]
+    private DateTime _fileLastWriteTime;
 
     [ObservableProperty]
     private long _fileSize;
