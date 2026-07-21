@@ -101,6 +101,11 @@ public partial class App : System.Windows.Application
                 config.HasAcceptedDisclaimer = true;
                 SaveConfig(config);
             }
+            else
+            {
+                Shutdown();
+                return;
+            }
         }
 
         // 恢复正常关闭模式并显示主窗口

@@ -110,7 +110,8 @@
                             <TextBlock Text="Wallpaper Engine 目录" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,0,4"/>
                             <TextBlock Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}"
                                        FontSize="12" TextTrimming="CharacterEllipsis"
-                                       TextWrapping="NoWrap"/>
+                                       TextWrapping="NoWrap"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -138,13 +139,8 @@
                                  MaxWidth="300" HorizontalAlignment="Left"
                                  x:Name="SearchBox"/>
 
-                        <!-- 排序和统计 -->
+                        <!-- 排序 -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TotalCount, StringFormat='共 {0} 个'}"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                            <TextBlock Text="{Binding SelectedCount, StringFormat='已选 {0} 个'}"
-                                       Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold"
-                                       VerticalAlignment="Center" Margin="0,0,16,0"/>
                             <Button Style="{StaticResource IconButton}" Content="↑↓"
                                     Command="{Binding ToggleSortDirectionCommand}"
                                     ToolTip="{Binding SortDirectionText}"/>
@@ -180,10 +176,12 @@
                               IsReadOnly="True"
                               CanUserAddRows="False"
                               CanUserDeleteRows="False"
-                              SelectionMode="Single"
+                              SelectionMode="Extended"
+                              SelectionUnit="FullRow"
                               GridLinesVisibility="None"
                               BorderThickness="0"
                               Background="Transparent"
+                              SelectionChanged="OnDataGridSelectionChanged"
                               Visibility="{Binding IsListView, Converter={StaticResource BoolToVisibilityConverter}}">
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">

@@ -68,4 +68,19 @@ public partial class MainWindow : Window
         }
         e.Handled = true;
     }
+
+    private void OnDataGridSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // 点击行时切换 IsSelected 勾选状态
+        foreach (var item in e.AddedItems)
+        {
+            if (item is WallpaperItemViewModel vm)
+                vm.IsSelected = true;
+        }
+        foreach (var item in e.RemovedItems)
+        {
+            if (item is WallpaperItemViewModel vm)
+                vm.IsSelected = false;
+        }
+    }
 }

@@ -251,6 +251,39 @@
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
 
+    <!-- ========== 全局滚动条样式 ========== -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Width" Value="5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid>
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border x:Name="thumbBorder"
+                                                    Background="{DynamicResource TextTertiaryBrush}"
+                                                    CornerRadius="2.5"
+                                                    Margin="0.5,0"/>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="thumbBorder" Property="Background" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ========== 导航项样式 ========== -->
     <Style x:Key="NavigationItem" TargetType="ListBoxItem">
         <Setter Property="Padding" Value="16,10"/>
