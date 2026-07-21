@@ -8,7 +8,7 @@
         Width="1280" Height="800"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
-        Background="#F3F3F3"
+        Background="{DynamicResource BackgroundBrush}"
         AllowDrop="True"
         DragEnter="OnDragEnter"
         DragLeave="OnDragLeave"
@@ -80,7 +80,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- 分类标题 -->
-                    <TextBlock Grid.Row="0" Text="分类筛选" FontSize="12" Foreground="#9E9E9E"
+                    <TextBlock Grid.Row="0" Text="分类筛选" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
                                Margin="16,16,16,8"/>
 
                     <!-- 分类列表 -->
@@ -97,7 +97,7 @@
                                     <TextBlock Text="{Binding Icon}" FontSize="16" Margin="0,0,10,0"/>
                                     <TextBlock Text="{Binding Name}"/>
                                     <TextBlock Text="{Binding Count, StringFormat=' ({0})'}"
-                                               Foreground="#9E9E9E" Margin="4,0,0,0"/>
+                                               Foreground="{DynamicResource TextTertiaryBrush}" Margin="4,0,0,0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -210,7 +210,7 @@
                                 </Setter>
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#100078D4"/>
+                                        <Setter Property="Background" Value="{DynamicResource DataGridCellSelectedBrush}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -221,10 +221,10 @@
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#080078D4"/>
+                                        <Setter Property="Background" Value="{DynamicResource DataGridSelectedBrush}"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#05000000"/>
+                                        <Setter Property="Background" Value="{DynamicResource DataGridHoverBrush}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -286,7 +286,7 @@
         </Border>
 
         <!-- ========== 进度指示器 ========== -->
-        <Border Grid.Row="4" Background="#0078D4" Padding="8"
+        <Border Grid.Row="4" Background="{DynamicResource PrimaryBrush}" Padding="8"
                 Visibility="{Binding IsExtracting, Converter={StaticResource BoolToVisibilityConverter}}">
             <TextBlock Text="正在解包..." Foreground="White" HorizontalAlignment="Center"/>
         </Border>

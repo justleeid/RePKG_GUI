@@ -6,13 +6,13 @@
         Width="480" Height="400"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="#F3F3F3">
+        Background="{DynamicResource BackgroundBrush}">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
 
-    <Border Background="White" CornerRadius="8" Margin="8">
+    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Margin="8">
         <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>

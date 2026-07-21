@@ -15,8 +15,8 @@
             CornerRadius="8"
             Margin="6"
             Padding="0"
-            BorderBrush="#E0E0E0"
-            Background="White">
+            BorderBrush="{DynamicResource BorderBrush}"
+            Background="{DynamicResource SurfaceBrush}">
         <Border.Effect>
             <DropShadowEffect BlurRadius="10" Opacity="0.08" ShadowDepth="2"/>
         </Border.Effect>
@@ -28,7 +28,7 @@
             </Grid.RowDefinitions>
 
             <!-- 缩略图区域 -->
-            <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="#F5F5F5" ClipToBounds="True">
+            <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="{DynamicResource BackgroundBrush}" ClipToBounds="True">
                 <Grid>
                     <!-- 缩略图图片 -->
                     <Image Source="{Binding PreviewImage}"
@@ -41,7 +41,7 @@
                                 HorizontalAlignment="Center"
                                 Visibility="{Binding IsLoadingPreview, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TextBlock Text="⏳" FontSize="28" HorizontalAlignment="Center"/>
-                        <TextBlock Text="加载中" FontSize="11" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="加载中" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center"/>
                     </StackPanel>
 
                     <!-- 无预览图占位符 -->
@@ -65,7 +65,7 @@
                             VerticalAlignment="Top"
                             Margin="8"
                             Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <Border Background="#0078D4" CornerRadius="12" Width="24" Height="24">
+                        <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="12" Width="24" Height="24">
                             <TextBlock Text="✓" FontSize="14" Foreground="White"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -90,14 +90,14 @@
                     <TextBlock Text="{Binding Title}"
                                FontSize="13"
                                FontWeight="SemiBold"
-                               Foreground="#1A1A1A"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
                                TextTrimming="CharacterEllipsis"
                                Margin="0,0,0,2"/>
 
                     <!-- 作者（可选显示） -->
                     <TextBlock Text="{Binding Author}"
                                FontSize="11"
-                               Foreground="#616161"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                TextTrimming="CharacterEllipsis"
                                Visibility="{Binding HasAuthor, Converter={StaticResource BoolToVisibilityConverter}}"
                                Margin="0,0,0,2"/>
@@ -105,7 +105,7 @@
                     <!-- 大小 -->
                     <TextBlock Text="{Binding FileSizeDisplay}"
                                FontSize="11"
-                               Foreground="#9E9E9E"/>
+                               Foreground="{DynamicResource TextTertiaryBrush}"/>
                 </StackPanel>
             </Border>
         </Grid>
