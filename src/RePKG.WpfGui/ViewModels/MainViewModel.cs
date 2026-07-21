@@ -669,6 +669,16 @@ public partial class MainViewModel : ObservableObject
 
                 progressViewModel.UpdateElapsed(DateTime.UtcNow - startTime);
 
+                // 更新文件级进度
+                if (info.TotalFiles > 0 && info.Status == ExtractItemStatus.Extracting)
+                {
+                    progressViewModel.FileProgressText = $"文件: {info.ProcessedFiles}/{info.TotalFiles}  {info.CurrentFileName}";
+                }
+                else if (info.Status == ExtractItemStatus.Completed)
+                {
+                    progressViewModel.FileProgressText = "";
+                }
+
                 // 更新进度列表项状态
                 var itemIndex = info.CompletedItems;
                 if (info.Status == ExtractItemStatus.Extracting)

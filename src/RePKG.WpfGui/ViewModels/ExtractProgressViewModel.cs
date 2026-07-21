@@ -71,6 +71,9 @@ public partial class ExtractProgressViewModel : ObservableObject
     [ObservableProperty]
     private string _resultSummary = string.Empty;
 
+    [ObservableProperty]
+    private string _fileProgressText = string.Empty;
+
     /// <summary>
     /// 更新进度
     /// </summary>

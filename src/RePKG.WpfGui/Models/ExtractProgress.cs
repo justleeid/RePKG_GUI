@@ -74,10 +74,32 @@ public record ExtractProgress
     /// </summary>
     public string? ErrorMessage { get; init; }
 
+    // ── 文件级进度 ──
+
     /// <summary>
-    /// 进度百分比
+    /// 当前 PKG 内总文件数
+    /// </summary>
+    public int TotalFiles { get; init; }
+
+    /// <summary>
+    /// 当前 PKG 内已处理文件数
+    /// </summary>
+    public int ProcessedFiles { get; init; }
+
+    /// <summary>
+    /// 当前正在处理的文件名
+    /// </summary>
+    public string? CurrentFileName { get; init; }
+
+    /// <summary>
+    /// 进度百分比（PKG 级）
     /// </summary>
     public double ProgressPercent => TotalItems > 0 ? (double)CompletedItems / TotalItems * 100 : 0;
+
+    /// <summary>
+    /// 当前 PKG 内文件进度百分比
+    /// </summary>
+    public double FileProgressPercent => TotalFiles > 0 ? (double)ProcessedFiles / TotalFiles * 100 : 0;
 }
 
 /// <summary>

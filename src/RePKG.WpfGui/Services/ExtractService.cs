@@ -56,7 +56,19 @@ public class ExtractService : IExtractService
 
                 try
                 {
-                    var result = ExtractSinglePkg(item, options, cancellationToken);
+                    // 创建文件级进度回调
+                    var fileProgress = new Progress<(int total, int current, string fileName)>(info =>
+                    {
+                        progress?.Report(progressInfo with
+                        {
+                            Status = ExtractItemStatus.Extracting,
+                            TotalFiles = info.total,
+                            ProcessedFiles = info.current,
+                            CurrentFileName = info.fileName
+                        });
+                    });
+
+                    var result = ExtractSinglePkg(item, options, fileProgress, cancellationToken);
                     switch (result)
                     {
                         case ExtractItemStatus.Completed:
@@ -129,7 +141,22 @@ public class ExtractService : IExtractService
                 Status = ExtractItemStatus.Extracting
             });
 
-            var result = ExtractSinglePkg(item, options, cancellationToken);
+            // 创建文件级进度回调
+            var fileProgress = new Progress<(int total, int current, string fileName)>(info =>
+            {
+                progress?.Report(new ExtractProgress
+                {
+                    TotalItems = 1,
+                    CompletedItems = 0,
+                    CurrentItemTitle = item.Title,
+                    Status = ExtractItemStatus.Extracting,
+                    TotalFiles = info.total,
+                    ProcessedFiles = info.current,
+                    CurrentFileName = info.fileName
+                });
+            });
+
+            var result = ExtractSinglePkg(item, options, fileProgress, cancellationToken);
 
             progress?.Report(new ExtractProgress
             {
@@ -146,6 +173,7 @@ public class ExtractService : IExtractService
     private static ExtractItemStatus ExtractSinglePkg(
         WallpaperItem item,
         ExtractOptions options,
+        IProgress<(int total, int current, string fileName)>? fileProgress,
         CancellationToken cancellationToken)
     {
         var pkgPath = item.PkgPath;
@@ -168,14 +196,19 @@ public class ExtractService : IExtractService
         cancellationToken.ThrowIfCancellationRequested();
 
         // 过滤条目
-        var entries = FilterEntries(package.Entries, options);
+        var entries = FilterEntries(package.Entries, options).ToList();
 
-        // 提取每个条目
-        foreach (var entry in entries)
+        // 提取每个条目，报告文件级进度
+        for (int j = 0; j < entries.Count; j++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var entry = entries[j];
+            fileProgress?.Report((entries.Count, j, Path.GetFileName(entry.FullPath)));
             ExtractEntry(entry, outputDirectory, options);
         }
+
+        // 报告完成
+        fileProgress?.Report((entries.Count, entries.Count, "完成"));
 
         return ExtractItemStatus.Completed;
     }

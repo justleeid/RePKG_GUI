@@ -41,10 +41,15 @@
 
             <!-- 当前项 -->
             <Border Grid.Row="2" Background="#F5F5F5" CornerRadius="6" Padding="12" Margin="0,0,0,16">
-                <TextBlock TextWrapping="Wrap" FontSize="12">
-                    <Run Text="当前: " Foreground="#9E9E9E"/>
-                    <Run Text="{Binding CurrentItemTitle}" FontWeight="SemiBold" Foreground="#1A1A1A"/>
-                </TextBlock>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4">
+                        <Run Text="当前: " Foreground="#9E9E9E"/>
+                        <Run Text="{Binding CurrentItemTitle}" FontWeight="SemiBold" Foreground="#1A1A1A"/>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#616161">
+                        <Run Text="{Binding FileProgressText}"/>
+                    </TextBlock>
+                </StackPanel>
             </Border>
 
             <!-- 进度列表 -->
