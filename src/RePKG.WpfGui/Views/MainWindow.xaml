@@ -32,21 +32,35 @@
         </Grid.RowDefinitions>
 
         <!-- ========== 工具栏 ========== -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="12,8">
-            <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource PrimaryButton}" Content="📂 打开目录"
-                        Command="{Binding OpenDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
-                <Button Style="{StaticResource ModernButton}" Content="🔄 扫描检测目录"
-                        Command="{Binding ScanDetectedDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
-                <Button Style="{StaticResource ModernButton}" Content="{Binding ViewModeToggleText}"
-                        Command="{Binding ToggleViewModeCommand}" Padding="16,8" Margin="0,0,8,0"/>
-                <Separator Margin="8,0" VerticalAlignment="Center" Height="20"/>
-                <Button Style="{StaticResource PrimaryButton}" Content="📦 解包选中"
-                        Command="{Binding ExtractSelectedCommand}" Padding="16,8" Margin="0,0,8,0"/>
-                <Button Style="{StaticResource IconButton}" Content="⏹ 取消"
-                        Command="{Binding CancelScanCommand}"
-                        Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-            </StackPanel>
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1" Padding="12,8">
+            <DockPanel>
+                <!-- 右侧：主题切换 -->
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}"
+                        Content="{Binding ThemeToggleText}" FontSize="18"
+                        Command="{Binding ToggleThemeCommand}"
+                        ToolTip="切换深色/浅色模式" Padding="8,4"/>
+
+                <!-- 左侧：功能按钮 -->
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource PrimaryButton}" Content="📂 打开目录"
+                            Command="{Binding OpenDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource ModernButton}" Content="🔄 扫描检测目录"
+                            Command="{Binding ScanDetectedDirectoryCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource ModernButton}" Content="{Binding ViewModeToggleText}"
+                            Command="{Binding ToggleViewModeCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                    <Separator Margin="8,0" VerticalAlignment="Center" Height="20"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="📦 解包选中"
+                            Command="{Binding ExtractSelectedCommand}" Padding="16,8" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource ModernButton}" Content="全选"
+                            Command="{Binding SelectAllCommand}" Padding="12,8" Margin="0,0,4,0"/>
+                    <Button Style="{StaticResource ModernButton}" Content="取消全选"
+                            Command="{Binding DeselectAllCommand}" Padding="12,8" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource IconButton}" Content="⏹ 取消"
+                            Command="{Binding CancelScanCommand}"
+                            Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- ========== 主内容区 ========== -->
@@ -57,7 +71,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- 左侧导航 -->
-            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -90,10 +104,10 @@
                     </ListBox>
 
                     <!-- 路径显示 -->
-                    <Border Grid.Row="2" Background="#F5F5F5" Padding="12" Margin="8,8"
+                    <Border Grid.Row="2" Background="{DynamicResource BackgroundBrush}" Padding="12" Margin="8,8"
                             CornerRadius="4" ToolTip="{Binding DetectedWorkshopPath}">
                         <StackPanel>
-                            <TextBlock Text="Wallpaper Engine 目录" FontSize="11" Foreground="#9E9E9E" Margin="0,0,0,4"/>
+                            <TextBlock Text="Wallpaper Engine 目录" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,0,4"/>
                             <TextBlock Text="{Binding DetectedWorkshopPath, FallbackValue='未检测到'}"
                                        FontSize="12" TextTrimming="CharacterEllipsis"
                                        TextWrapping="NoWrap"/>
@@ -110,7 +124,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- 搜索和状态栏 -->
-                <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0"
+                <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1" Padding="16,10">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -127,9 +141,9 @@
                         <!-- 排序和统计 -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="{Binding TotalCount, StringFormat='共 {0} 个'}"
-                                       Foreground="#616161" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                             <TextBlock Text="{Binding SelectedCount, StringFormat='已选 {0} 个'}"
-                                       Foreground="#0078D4" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,16,0"/>
                             <Button Style="{StaticResource IconButton}" Content="↑↓"
                                     Command="{Binding ToggleSortDirectionCommand}"
@@ -175,7 +189,8 @@
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="Padding" Value="8,6"/>
-                                <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
@@ -233,9 +248,41 @@
                              Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
         <!-- ========== 状态栏 ========== -->
-        <Border Grid.Row="3" Background="White" BorderBrush="#E0E0E0"
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0" Padding="16,8">
-            <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#616161"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Column="1" FontSize="12" Margin="16,0"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           VerticalAlignment="Center">
+                    <Run Text="共 "/>
+                    <Run Text="{Binding TotalCount, Mode=OneWay}"/>
+                    <Run Text=" 个"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="2" FontSize="12" Margin="0,0,16,0"
+                           Foreground="{DynamicResource PrimaryBrush}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center">
+                    <Run Text="已选 "/>
+                    <Run Text="{Binding SelectedCount, Mode=OneWay}"/>
+                    <Run Text=" 个"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="3" Text="{Binding CacheDisplay}" FontSize="12"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           VerticalAlignment="Center"/>
+            </Grid>
         </Border>
 
         <!-- ========== 进度指示器 ========== -->

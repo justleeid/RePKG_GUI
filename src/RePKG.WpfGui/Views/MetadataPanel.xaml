@@ -7,8 +7,8 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
 
-    <Border Background="White"
-            BorderBrush="#E0E0E0"
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="0,1,0,0"
             Padding="16,12">
 
@@ -21,7 +21,7 @@
 
             <!-- 预览图 -->
             <Border Grid.Column="0" Width="120" Height="120" CornerRadius="8"
-                    Background="#F5F5F5" Margin="0,0,16,0" ClipToBounds="True">
+                    Background="{DynamicResource BackgroundBrush}" Margin="0,0,16,0" ClipToBounds="True">
                 <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"/>
             </Border>
 

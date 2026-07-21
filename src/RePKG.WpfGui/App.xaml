@@ -4,8 +4,10 @@
              xmlns:converters="clr-namespace:RePKG.WpfGui.Converters">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- 引入全局样式 -->
             <ResourceDictionary.MergedDictionaries>
+                <!-- 主题（默认浅色，App.xaml.cs 中动态切换） -->
+                <ResourceDictionary Source="Resources/Themes/Light.xaml"/>
+                <!-- 样式 -->
                 <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 

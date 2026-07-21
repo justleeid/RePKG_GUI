@@ -90,6 +90,23 @@ public partial class MainViewModel : ObservableObject
 
         // 自动检测 Steam 路径
         DetectedWorkshopPath = _steamService.DetectWorkshopDirectory();
+
+        // 初始化缓存显示
+        RefreshCacheDisplay();
+
+        // 加载保存的主题
+        var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(configPath);
+                var config = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json);
+                if (config?.IsDarkMode == true)
+                    IsDarkMode = true;
+            }
+            catch { }
+        }
     }
 
     // ── 可观察属性 ──
@@ -154,6 +171,17 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showSelectedOnly;
+
+    [ObservableProperty]
+    private string _cacheDisplay = "缓存: 计算中...";
+
+    [ObservableProperty]
+    private bool _isDarkMode;
+
+    /// <summary>
+    /// 主题切换按钮文本
+    /// </summary>
+    public string ThemeToggleText => IsDarkMode ? "☀️" : "🌙";
 
     [ObservableProperty]
     private CategoryItem? _selectedCategory;
@@ -244,6 +272,12 @@ public partial class MainViewModel : ObservableObject
         ApplySearchFilter();
     }
 
+    partial void OnIsDarkModeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ThemeToggleText));
+        App.ApplyTheme(value);
+    }
+
     partial void OnSelectedTypeChanged(string? value)
     {
         ApplySearchFilter();
@@ -260,6 +294,36 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ── 命令 ──
+
+    /// <summary>
+    /// 切换深色/浅色主题
+    /// </summary>
+    [RelayCommand]
+    private void ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+    }
+
+    /// <summary>
+    /// 刷新缓存显示
+    /// </summary>
+    private void RefreshCacheDisplay()
+    {
+        try
+        {
+            var bytes = _thumbnailService.GetCacheSizeBytes();
+            CacheDisplay = bytes switch
+            {
+                < 1024 => "缓存: 0 MB",
+                < 1024 * 1024 => $"缓存: {bytes / 1024:N0} KB",
+                _ => $"缓存: {bytes / (1024 * 1024):N0} MB"
+            };
+        }
+        catch
+        {
+            CacheDisplay = "缓存: --";
+        }
+    }
 
     /// <summary>
     /// 打开目录对话框

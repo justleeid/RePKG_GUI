@@ -23,4 +23,14 @@ public interface IThumbnailService
     /// <param name="decodePixelWidth">解码宽度</param>
     /// <returns>BitmapImage，失败返回 null</returns>
     Task<BitmapImage?> CreateThumbnailAsync(byte[] imageBytes, int decodePixelWidth = 200);
+
+    /// <summary>
+    /// 获取磁盘缓存大小（字节）
+    /// </summary>
+    long GetCacheSizeBytes();
+
+    /// <summary>
+    /// 清理磁盘缓存
+    /// </summary>
+    void ClearCache();
 }

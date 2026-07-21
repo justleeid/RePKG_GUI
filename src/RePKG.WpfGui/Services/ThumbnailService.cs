@@ -158,6 +158,38 @@ public class ThumbnailService : IThumbnailService, IDisposable
         return Convert.ToHexString(hash)[..16]; // 取前16位作为文件名
     }
 
+    /// <inheritdoc/>
+    public long GetCacheSizeBytes()
+    {
+        try
+        {
+            var dir = new DirectoryInfo(DiskCacheDir);
+            if (!dir.Exists) return 0;
+            return dir.GetFiles("*.jpg").Sum(f => f.Length);
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ClearCache()
+    {
+        try
+        {
+            var dir = new DirectoryInfo(DiskCacheDir);
+            if (!dir.Exists) return;
+            foreach (var file in dir.GetFiles("*.jpg"))
+                file.Delete();
+            _memoryCache.Clear();
+        }
+        catch
+        {
+            // 清理失败不影响主流程
+        }
+    }
+
     public void Dispose()
     {
         _memoryCache.Clear();
