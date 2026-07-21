@@ -92,6 +92,9 @@ public partial class App : System.Windows.Application
         var config = LoadConfig();
         if (!config.HasAcceptedDisclaimer)
         {
+            // 防止对话框关闭后应用自动退出
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             var welcomeDialog = new WelcomeDialog();
             if (welcomeDialog.ShowDialog() == true)
             {
@@ -99,6 +102,9 @@ public partial class App : System.Windows.Application
                 SaveConfig(config);
             }
         }
+
+        // 恢复正常关闭模式并显示主窗口
+        ShutdownMode = ShutdownMode.OnLastWindowClose;
 
         var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
